@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { toast } from 'vue-sonner'
+import BaseSearch from '@/components/layout/BaseSearch.vue' // Import komponen reusable
 
-// 1. Definisi Interface sesuai Model di Backend [cite: 163]
+// 1. Definisi Interface sesuai Model di Backend
 interface Siswa {
   id: number | null;
   nisn: string;
@@ -15,11 +16,25 @@ interface Siswa {
 }
 
 // 2. State Management
+const searchQuery = ref('')
 const siswa = ref<Siswa[]>([])
 const isModalOpen = ref(false)
 const modalMode = ref<'add' | 'edit'>('add')
 
-// State untuk Form Modal [cite: 638-662]
+// 3. Logika Filter Reaktif (Computed)
+// Tabel akan otomatis update saat searchQuery berubah
+const filteredSiswa = computed(() => {
+  if (!searchQuery.value) return siswa.value
+
+  const query = searchQuery.value.toLowerCase()
+  return siswa.value.filter(s =>
+    s.namaLengkap.toLowerCase().includes(query) ||
+    s.nisn.includes(query) ||
+    s.kelas.toLowerCase().includes(query)
+  )
+})
+
+// State untuk Form Modal
 const formSiswa = ref<Siswa>({
   id: null,
   nisn: '',
@@ -30,7 +45,7 @@ const formSiswa = ref<Siswa>({
   status: 'Aktif'
 })
 
-// 3. Fungsi API (Integrasi Backend)
+// 4. Fungsi API (Integrasi Backend)
 const fetchSiswa = async () => {
   try {
     const response = await axios.get('http://localhost:8080/api/siswa')
@@ -45,6 +60,7 @@ const openModal = (mode: 'add' | 'edit', data: Siswa | null = null) => {
   if (mode === 'edit' && data) {
     formSiswa.value = { ...data } // Copy data agar tidak reaktif langsung ke tabel
   } else {
+    // Reset form untuk mode tambah
     formSiswa.value = { id: null, nisn: '', namaLengkap: '', kelas: '', jenisKelamin: 'L', waliKelas: '', status: 'Aktif' }
   }
   isModalOpen.value = true
@@ -60,20 +76,19 @@ const handleSubmit = async () => {
       toast.success('Data siswa berhasil diperbarui')
     }
     isModalOpen.value = false
-    fetchSiswa()
+    fetchSiswa() // Refresh data asli
   } catch (error: any) {
     const msg = error.response?.data?.message || 'Gagal menyimpan data'
-    toast.error(msg) // Menampilkan error jika NISN duplikat
+    toast.error(msg)
   }
 }
 
 const handleNonaktif = async (id: number, nama: string) => {
-  // Sesuai PRD: Mengisi alasan (Lulus/Pindah/DO)
   const alasan = prompt(`Mengapa ${nama} dinonaktifkan? (Lulus/Pindah/DO)`, "Pindah")
   if (alasan) {
     try {
       await axios.patch(`http://localhost:8080/api/siswa/${id}/nonaktif`, { alasan })
-      toast.success(`${nama} sekarang berstatus: ${alasan}`)
+      toast.success(`${nama} berhasil dinonaktifkan`)
       fetchSiswa()
     } catch (error) {
       toast.error('Gagal memperbarui status')
@@ -91,12 +106,19 @@ onMounted(fetchSiswa)
         <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Data Siswa</h1>
         <p class="text-gray-500">Kelola informasi murid dan status keaktifan sekolah</p>
       </div>
-      <button
-        @click="openModal('add')"
-        class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-teal-200 transition-all flex items-center gap-2"
-      >
-        <span class="text-xl">+</span> Tambah Siswa
-      </button>
+
+      <div class="flex items-center gap-4">
+        <BaseSearch
+          v-model="searchQuery"
+          placeholder="Cari Nama, NISN, atau Kelas..."
+        />
+        <button
+          @click="openModal('add')"
+          class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-teal-200 transition-all flex items-center gap-2 whitespace-nowrap"
+        >
+          <span class="text-xl">+</span> Tambah Siswa
+        </button>
+      </div>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -106,18 +128,18 @@ onMounted(fetchSiswa)
             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">NISN</th>
             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Lengkap</th>
             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Kelas</th>
-            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">L/P</th>
+            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">L/P</th>
             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Wali Kelas</th>
             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Status</th>
             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          <tr v-for="s in siswa" :key="s.id!" class="hover:bg-slate-50 transition-colors group">
+          <tr v-for="s in filteredSiswa" :key="s.id!" class="hover:bg-slate-50 transition-colors group">
             <td class="px-6 py-4 text-sm font-medium text-gray-500">{{ s.nisn }}</td>
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ s.namaLengkap }}</td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ s.kelas }}</td>
-            <td class="px-6 py-4 text-sm text-gray-600">{{ s.jenisKelamin }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 text-center">{{ s.jenisKelamin }}</td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ s.waliKelas }}</td>
             <td class="px-6 py-4 text-center">
               <span
@@ -134,25 +156,30 @@ onMounted(fetchSiswa)
               </div>
             </td>
           </tr>
+          <tr v-if="filteredSiswa.length === 0">
+            <td colspan="7" class="px-6 py-12 text-center text-gray-400 italic">
+              Data siswa tidak ditemukan...
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
     <div v-if="isModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
           <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Siswa Baru' : 'Perbarui Data Siswa' }}</h3>
           <button @click="isModalOpen = false" class="text-2xl hover:rotate-90 transition-transform">✕</button>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="p-8 space-y-5">
+        <form @submit.prevent="handleSubmit" class="p-8 space-y-5 text-left">
           <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nomor Induk Siswa Nasional (NISN)</label>
-            <input v-model="formSiswa.nisn" type="text" maxlength="10" placeholder="Contoh: 0061234567" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] transition-all" required />
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">NISN</label>
+            <input v-model="formSiswa.nisn" type="text" maxlength="10" placeholder="Masukkan 10 digit NISN" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] transition-all" required />
           </div>
           <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nama Lengkap Murid</label>
-            <input v-model="formSiswa.namaLengkap" type="text" placeholder="Masukkan nama sesuai ijazah" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] transition-all" required />
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nama Lengkap</label>
+            <input v-model="formSiswa.namaLengkap" type="text" placeholder="Masukkan nama murid" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] transition-all" required />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-1">
@@ -173,9 +200,9 @@ onMounted(fetchSiswa)
           </div>
 
           <div class="flex gap-4 pt-6">
-            <button type="button" @click="isModalOpen = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all">Batal</button>
+            <button type="button" @click="isModalOpen = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl">Batal</button>
             <button type="submit" class="flex-1 py-3 bg-[#1A2342] text-white rounded-xl font-bold hover:bg-slate-800 shadow-xl transition-all">
-              {{ modalMode === 'add' ? 'Simpan Data' : 'Simpan Perubahan' }}
+              {{ modalMode === 'add' ? 'Simpan' : 'Update' }}
             </button>
           </div>
         </form>
@@ -185,7 +212,6 @@ onMounted(fetchSiswa)
 </template>
 
 <style scoped>
-/* Transisi untuk tabel */
 .font-inter {
   font-family: 'Inter', sans-serif;
 }
