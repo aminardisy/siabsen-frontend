@@ -2,7 +2,6 @@ export interface Role {
   id: number
   name: string
   description?: string
-  isActive?: boolean
 }
 
 export interface UpdateRolePayload {
@@ -12,13 +11,20 @@ export interface UpdateRolePayload {
 
 export interface PermissionItem {
   id: number
-  name: string
   action: string
-  module: string
-  checked?: boolean
+  moduleName: string
+  moduleCode: string
 }
 
 export interface ModulePermissionGroup {
-  module: string
+  moduleCode: string
+  moduleName: string
   permissions: PermissionItem[]
+}
+
+export interface RolePermissionsResponse {
+  roleId: number
+  roleName: string
+  permissionIds: number[]
+  availablePermissions: ModulePermissionGroup[]
 }

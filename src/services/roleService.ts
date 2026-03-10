@@ -1,5 +1,5 @@
 import api from './api'
-import type { Role, UpdateRolePayload, ModulePermissionGroup } from '@/types/role'
+import type { Role, UpdateRolePayload, RolePermissionsResponse } from '@/types/role'
 
 export const roleService = {
   async getRoles(): Promise<Role[]> {
@@ -12,23 +12,21 @@ export const roleService = {
     return response.data
   },
 
-  async updateRole(id: number, payload: UpdateRolePayload) {
+  async updateRole(id: number, payload: UpdateRolePayload): Promise<Role> {
     const response = await api.put(`/role/${id}`, payload)
     return response.data
   },
 
-  async deleteRole(id: number) {
-    const response = await api.delete(`/role/${id}`)
-    return response.data
+  async deleteRole(id: number): Promise<void> {
+    await api.delete(`/role/${id}`)
   },
 
-  async getRolePermissions(id: number): Promise<ModulePermissionGroup[]> {
+  async getRolePermissions(id: number): Promise<RolePermissionsResponse> {
     const response = await api.get(`/role/${id}/permissions`)
     return response.data
   },
 
-  async updateRolePermissions(id: number, payload: ModulePermissionGroup[]) {
-    const response = await api.put(`/role/${id}/permissions`, payload)
-    return response.data
+  async updateRolePermissions(id: number, permissionIds: number[]): Promise<void> {
+    await api.put(`/role/${id}/permissions`, { permissionIds })
   },
 }
