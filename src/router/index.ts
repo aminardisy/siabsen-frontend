@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import HomeView from '@/views/HomeView.vue'
+import RoleManagementView from '@/views/role/RoleManagementView.vue'
 
 import { useAuthStore } from '@/stores/auth';
 
@@ -34,10 +35,12 @@ const router = createRouter({
     {
       path: '/about',
       name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
+    },
+    {
+      path: '/roles',
+      name: 'roles',
+      component: () => import('../views/role/RoleManagementView.vue'),
     },
   ],
 })
@@ -45,7 +48,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   
-  // If the route requires auth and user isn't logged in [cite: 2025-11-25]
+  // If the route requires auth and user isn't logged in
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
   } else {

@@ -1,4 +1,4 @@
-import api from './axios';
+import api from '../api/axios';
 import type { Siswa } from '../models/siswa'; 
 
 export const siswaService = {

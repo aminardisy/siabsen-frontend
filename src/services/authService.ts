@@ -1,4 +1,4 @@
-import api from './axios';
+import api from '../api/axios';
 import type { LoginRequest, LoginResponse } from '../models/auth';
 
 export const authService = {

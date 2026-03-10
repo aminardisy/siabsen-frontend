@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { toast } from 'vue-sonner'
 import type { Siswa } from '@/models/siswa'
-import { siswaService } from '@/api/siswaService'
+import { siswaService } from '@/services/siswaService'
 
 // 1. State Management
 const siswa = ref<Siswa[]>([])
