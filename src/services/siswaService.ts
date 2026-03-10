@@ -1,16 +1,22 @@
-import api from '../api/axios';
-import type { Siswa } from '../models/siswa'; 
+// src/services/siswaService.ts
+import api from './api';
+import type { SiswaRequest, SiswaResponse } from '../models/siswa';
 
 export const siswaService = {
-  getAll: async () => {
+  // Mengambil semua siswa
+  getAll: async (): Promise<SiswaResponse[]> => {
     const response = await api.get('/siswa');
+    // Mengambil property 'data' dari BaseResponseDTO backend
     return response.data.data;
   },
 
-  create: (data: Siswa) => api.post('/siswa', data),
-  
-  update: (id: number, data: Siswa) => api.put(`/siswa/${id}`, data),
-  
-  deactivate: (id: number, alasan: string) => 
+  // Membuat siswa baru (Mengirim SiswaRequest)
+  create: (data: SiswaRequest) => api.post('/siswa', data),
+
+  // Update data siswa
+  update: (id: number, data: SiswaRequest) => api.put(`/siswa/${id}`, data),
+
+  // Menonaktifkan siswa (Soft Delete)
+  deactivate: (id: number, alasan: string) =>
     api.patch(`/siswa/${id}/nonaktif`, { alasan })
 };
