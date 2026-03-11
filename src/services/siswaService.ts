@@ -7,7 +7,7 @@ export const siswaService = {
   getAll: async (): Promise<SiswaResponse[]> => {
     const response = await api.get('/siswa');
     // Mengambil property 'data' dari BaseResponseDTO backend
-    return response.data.data;
+    return response.data;
   },
 
   // Membuat siswa baru (Mengirim SiswaRequest)

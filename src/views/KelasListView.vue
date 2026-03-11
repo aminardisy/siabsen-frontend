@@ -90,6 +90,18 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
   isModalOpen.value = true
 }
 
+const handleDelete = async (id: number, nama: string) => {
+  if (confirm(`Hapus kelas ${nama}? Semua siswa di kelas ini akan kehilangan asosiasi kelasnya.`)) {
+    try {
+      await kelasService.delete(id)
+      toast.success('Kelas berhasil dihapus')
+      fetchData()
+    } catch (e) {
+      toast.error('Gagal menghapus kelas')
+    }
+  }
+}
+
 onMounted(fetchData)
 </script>
 
@@ -131,7 +143,21 @@ onMounted(fetchData)
             </td>
             <td class="px-6 py-4 text-center text-sm font-bold">{{ k.jumlahSiswa }}</td>
             <td class="px-6 py-4 text-center">
-              <button @click="openModal('edit', k)" class="text-blue-500 hover:text-blue-700 font-bold text-sm">Edit</button>
+              <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  @click="openModal('edit', k)"
+                  class="text-blue-500 hover:text-blue-700 font-bold text-sm"
+                >
+                  Edit
+                </button>
+
+                <button
+                  @click="handleDelete(k.id, k.namaKelas)"
+                  class="text-red-400 hover:text-red-600 font-bold text-sm"
+                >
+                  Hapus
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

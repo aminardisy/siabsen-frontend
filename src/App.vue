@@ -1,34 +1,31 @@
 <template>
-  <div class="flex min-h-screen bg-gray-50 font-inter text-slate-800">
-    <Sidebar @toggle="handleSidebarToggle" />
+  <div class="min-h-screen bg-gray-50 flex">
 
-    <div
+    <Sidebar v-if="authStore.isAuthenticated" />
+
+    <main
       :class="[
-        'flex-1 flex flex-col transition-all duration-300',
-        isSidebarCollapsed ? 'ml-20' : 'ml-64'
+        'flex-1 transition-all duration-300 ease-in-out min-w-0',
+        authStore.isAuthenticated
+          ? (uiStore.isSidebarCollapsed ? 'ml-20' : 'ml-64')
+          : 'ml-0'
       ]"
     >
-      <Navbar />
+      <Navbar v-if="authStore.isAuthenticated" />
 
-      <main class="flex-1">
-        <RouterView />
-      </main>
-    </div>
-
-    <Toaster position="top-right" richColors />
+      <div :class="authStore.isAuthenticated ? 'p-4 md:p-8' : 'p-0'">
+        <router-view />
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import Sidebar from './components/layout/Sidebar.vue'
-import Navbar from './components/layout/Navbar.vue'
-import { Toaster } from 'vue-sonner'
+import Sidebar from '@/components/layout/Sidebar.vue'
+import Navbar from '@/components/layout/Navbar.vue'
+import { useUIStore } from '@/stores/ui'
+import { useAuthStore } from '@/stores/auth'
 
-const isSidebarCollapsed = ref(false)
-
-// Fungsi untuk menerima sinyal buka-tutup dari sidebar
-const handleSidebarToggle = (collapsed: boolean) => {
-  isSidebarCollapsed.value = collapsed
-}
+const uiStore = useUIStore()
+const authStore = useAuthStore()
 </script>

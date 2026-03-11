@@ -22,20 +22,18 @@ const router = createRouter({
       component: () => import('../views/SiswaListView.vue'),
       meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] }
     },
-    // --- TAMBAHKAN RUTE BARU DISINI ---
     {
       path: '/data-guru',
       name: 'data-guru',
       component: () => import('../views/GuruListView.vue'),
-      meta: { requiresAuth: true, role: 'ADMIN' } // Hanya Admin yang bisa kelola Guru
+      meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
       path: '/data-kelas',
       name: 'data-kelas',
       component: () => import('../views/KelasListView.vue'),
-      meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] } // Keduanya bisa lihat
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] }
     },
-    // ---------------------------------
     {
       path: '/accounts',
       name: 'accounts',
@@ -56,28 +54,27 @@ const router = createRouter({
   ],
 })
 
-// Navigation Guard (Pintu Satpam)
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  const userRole = authStore.user?.role // Ambil role user dari Pinia store
+  const userRole = authStore.user?.role
 
-  // 1. Cek Login
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.path === '/login' && authStore.isAuthenticated) {
+    next('/')
+  }
+  else if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   }
-  // 2. Cek Izin Role (RBAC)
   else if (to.meta.role) {
     const allowedRoles = Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role]
-
     if (allowedRoles.includes(userRole)) {
-      next() // Role cocok, silakan masuk
+      next()
     } else {
       alert('Maaf, Anda tidak memiliki akses ke halaman ini!')
-      next('/') // Role tidak cocok, tendang ke Home
+      next('/')
     }
   }
   else {
-    next() // Halaman publik atau tidak butuh role khusus
+    next()
   }
 })
 
