@@ -20,6 +20,8 @@ const formGuru = ref<GuruRequest & { id?: number }>({
   mataPelajaran: ''
 })
 
+const sanitizeDigits = (value: string, maxLength: number) => value.replace(/\D/g, '').slice(0, maxLength)
+
 // 2. Logic: Search & Filter
 const filteredGuru = computed(() => {
   if (!guruList.value) return []
@@ -75,6 +77,15 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
 
 const handleSubmit = async () => {
   try {
+    const nuptk = formGuru.value.nuptk.trim()
+
+    if (!/^\d{16}$/.test(nuptk)) {
+      toast.error('NUPTK harus berupa 16 digit angka')
+      return
+    }
+
+    formGuru.value.nuptk = nuptk
+
     if (modalMode.value === 'add') {
       await guruService.create(formGuru.value)
       toast.success('Guru baru berhasil ditambahkan')
@@ -127,7 +138,7 @@ onMounted(fetchData)
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ g.nama }}</td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ g.jabatan }}</td>
             <td class="px-6 py-4 text-center">
-              <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="flex justify-center gap-3">
                 <button @click="openModal('edit', g)" class="text-blue-500 hover:text-blue-700 font-bold text-sm">Edit</button>
                 <button @click="handleDelete(g.id, g.nama)" class="text-red-400 hover:text-red-600 font-bold text-sm">Hapus</button>
               </div>
@@ -141,7 +152,7 @@ onMounted(fetchData)
       </div>
     </div>
 
-    <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
+    <div v-if="isModalOpen" class="fixed inset-0 z-9999 flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
           <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Guru Baru' : 'Edit Data Guru' }}</h3>
@@ -165,10 +176,16 @@ onMounted(fetchData)
             <input
               v-model="formGuru.nuptk"
               type="text"
+                inputmode="numeric"
+                maxlength="16"
+                pattern="[0-9]{16}"
+                title="NUPTK harus 16 digit angka"
               placeholder="16 Digit NUPTK"
               class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+                @input="formGuru.nuptk = sanitizeDigits(formGuru.nuptk, 16)"
               required
             />
+              <p class="text-xs text-gray-400 ml-1">Masukkan 16 digit angka tanpa spasi atau huruf.</p>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
@@ -181,13 +198,22 @@ onMounted(fetchData)
             </div>
             <div class="space-y-1">
               <label class="text-xs font-bold text-gray-400 uppercase ml-1">Mata Pelajaran</label>
-              <input
+              <select
                 v-model="formGuru.mataPelajaran"
-                type="text"
-                placeholder="Informatika"
                 class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
                 required
-              />
+              >
+                <option disabled value="">Pilih Mata Pelajaran</option>
+                <option value="Matematika Wajib">Matematika Wajib</option>
+                <option value="Matematika Minat">Matematika Minat</option>
+                <option value="Biologi">Biologi</option>
+                <option value="Fisika">Fisika</option>
+                <option value="Kimia">Kimia</option>
+                <option value="Sejarah">Sejarah</option>
+                <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                <option value="Bahasa Inggris">Bahasa Inggris</option>
+                <option value="Agama Islam">Agama Islam</option>
+              </select>
             </div>
           </div>
 

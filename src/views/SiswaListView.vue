@@ -22,6 +22,8 @@ const formSiswa = ref<SiswaRequest & { id?: number }>({
   jenisKelamin: 'L',
 })
 
+const sanitizeDigits = (value: string, maxLength: number) => value.replace(/\D/g, '').slice(0, maxLength)
+
 // 2. Logic: Search & Filter (Berdasarkan Nama, NISN, atau Kelas)
 const filteredSiswa = computed(() => {
   if (!searchQuery.value) return siswaList.value
@@ -49,6 +51,15 @@ const fetchData = async () => {
 
 const handleSubmit = async () => {
   try {
+    const nisn = formSiswa.value.nisn.trim()
+
+    if (!/^\d{10}$/.test(nisn)) {
+      toast.error('NISN harus berupa 10 digit angka')
+      return
+    }
+
+    formSiswa.value.nisn = nisn
+
     if (modalMode.value === 'add') {
       await siswaService.create(formSiswa.value)
       toast.success('Siswa baru berhasil ditambahkan')
@@ -139,7 +150,7 @@ onMounted(fetchData)
               </span>
             </td>
             <td class="px-6 py-4 text-center">
-              <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="flex justify-center gap-3">
                 <button @click="openModal('edit', s)" class="text-blue-500 hover:text-blue-700 font-bold text-sm">Edit</button>
                 <button v-if="s.status === 'Aktif'" @click="handleNonaktif(s.id, s.namaLengkap)" class="text-red-400 hover:text-red-600 font-bold text-sm">Nonaktifkan</button>
               </div>
@@ -149,7 +160,7 @@ onMounted(fetchData)
       </table>
     </div>
 
-    <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
+    <div v-if="isModalOpen" class="fixed inset-0 z-9999 flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
           <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Siswa Baru' : 'Perbarui Data Siswa' }}</h3>
@@ -159,7 +170,18 @@ onMounted(fetchData)
         <form @submit.prevent="handleSubmit" class="p-8 space-y-5 text-left">
           <div class="space-y-1">
             <label class="text-xs font-bold text-gray-400 uppercase">NISN</label>
-            <input v-model="formSiswa.nisn" type="text" maxlength="10" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required />
+            <input
+              v-model="formSiswa.nisn"
+              type="text"
+              inputmode="numeric"
+              maxlength="10"
+              pattern="[0-9]{10}"
+              title="NISN harus 10 digit angka"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+              @input="formSiswa.nisn = sanitizeDigits(formSiswa.nisn, 10)"
+              required
+            />
+            <p class="text-xs text-gray-400 ml-1">Masukkan 10 digit angka tanpa spasi atau huruf.</p>
           </div>
           <div class="space-y-1">
             <label class="text-xs font-bold text-gray-400 uppercase">Nama Lengkap</label>

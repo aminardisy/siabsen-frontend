@@ -136,9 +136,7 @@ onMounted(fetchAccounts)
               </span>
             </td>
             <td class="px-6 py-4 text-center">
-              <div
-                class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
+              <div class="flex justify-center gap-3">
                 <button
                   @click="openModal('edit', acc)"
                   class="text-blue-500 hover:text-blue-700 font-bold"

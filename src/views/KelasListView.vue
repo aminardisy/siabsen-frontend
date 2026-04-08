@@ -143,7 +143,7 @@ onMounted(fetchData)
             </td>
             <td class="px-6 py-4 text-center text-sm font-bold">{{ k.jumlahSiswa }}</td>
             <td class="px-6 py-4 text-center">
-              <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="flex justify-center gap-3">
                 <button
                   @click="openModal('edit', k)"
                   class="text-blue-500 hover:text-blue-700 font-bold text-sm"
