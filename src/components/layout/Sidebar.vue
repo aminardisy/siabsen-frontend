@@ -60,6 +60,20 @@
         </template>
       </SidebarItem>
 
+      <SidebarItem
+        v-if="authStore.user?.role === 'GURU'"
+        to="/catat-keterlambatan"
+        label="Catat Keterlambatan"
+        :active="route.path.startsWith('/catat-keterlambatan')"
+        :isCollapsed="uiStore.isSidebarCollapsed"
+      >
+        <template #icon>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </template>
+      </SidebarItem>
+
       <SidebarItem v-if="authStore.user?.role === 'ADMIN'" to="/accounts" label="Manajemen Akun" :active="route.path.startsWith('/accounts')" :isCollapsed="uiStore.isSidebarCollapsed">
         <template #icon>
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>

@@ -35,6 +35,12 @@ const router = createRouter({
       meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] }
     },
     {
+      path: '/catat-keterlambatan',
+      name: 'catat-keterlambatan',
+      component: () => import('../views/CatatKeterlambatanView.vue'),
+      meta: { requiresAuth: true, role: 'GURU' }
+    },
+    {
       path: '/accounts',
       name: 'accounts',
       component: () => import('@/views/AccountView.vue'),
