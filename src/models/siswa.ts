@@ -1,7 +1,7 @@
 export interface SiswaResponse {
   id: number;
   nisn: string;
-  namaLengkap: string;
+  nama: string;
   namaKelas: string;
   jenisKelamin: string;
   status: string;
@@ -9,7 +9,7 @@ export interface SiswaResponse {
 
 export interface SiswaRequest {
   nisn: string;
-  namaLengkap: string;
+  nama: string;
   kelasId: number | null;
   jenisKelamin: string;
 }

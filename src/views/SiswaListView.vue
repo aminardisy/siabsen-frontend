@@ -17,7 +17,7 @@ const modalMode = ref<'add' | 'edit'>('add')
 const formSiswa = ref<SiswaRequest & { id?: number }>({
   id: undefined,
   nisn: '',
-  namaLengkap: '',
+  nama: '',
   kelasId: null,
   jenisKelamin: 'L',
 })
@@ -27,7 +27,7 @@ const filteredSiswa = computed(() => {
   if (!searchQuery.value) return siswaList.value
   const query = searchQuery.value.toLowerCase()
   return siswaList.value.filter(s =>
-    s.namaLengkap.toLowerCase().includes(query) ||
+    s.nama.toLowerCase().includes(query) ||
     s.nisn.includes(query) ||
     s.namaKelas.toLowerCase().includes(query)
   )
@@ -86,12 +86,12 @@ const openModal = (mode: 'add' | 'edit', data: SiswaResponse | null = null) => {
     formSiswa.value = {
       id: data.id,
       nisn: data.nisn,
-      namaLengkap: data.namaLengkap,
+      nama: data.nama,
       kelasId: selectedKelas ? selectedKelas.id : null,
       jenisKelamin: data.jenisKelamin,
     }
   } else {
-    formSiswa.value = { id: undefined, nisn: '', namaLengkap: '', kelasId: null, jenisKelamin: 'L' }
+    formSiswa.value = { id: undefined, nisn: '', nama: '', kelasId: null, jenisKelamin: 'L' }
   }
   isModalOpen.value = true
 }
@@ -130,7 +130,7 @@ onMounted(fetchData)
         <tbody class="divide-y divide-gray-50">
           <tr v-for="s in filteredSiswa" :key="s.id" class="hover:bg-slate-50 transition-colors group">
             <td class="px-6 py-4 text-sm font-medium text-gray-500">{{ s.nisn }}</td>
-            <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ s.namaLengkap }}</td>
+            <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ s.nama }}</td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ s.namaKelas || '-' }}</td>
             <td class="px-6 py-4 text-sm text-gray-600 text-center">{{ s.jenisKelamin }}</td>
             <td class="px-6 py-4 text-center">
@@ -141,7 +141,7 @@ onMounted(fetchData)
             <td class="px-6 py-4 text-center">
               <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button @click="openModal('edit', s)" class="text-blue-500 hover:text-blue-700 font-bold text-sm">Edit</button>
-                <button v-if="s.status === 'Aktif'" @click="handleNonaktif(s.id, s.namaLengkap)" class="text-red-400 hover:text-red-600 font-bold text-sm">Nonaktifkan</button>
+                <button v-if="s.status === 'Aktif'" @click="handleNonaktif(s.id, s.nama)" class="text-red-400 hover:text-red-600 font-bold text-sm">Nonaktifkan</button>
               </div>
             </td>
           </tr>
@@ -163,7 +163,7 @@ onMounted(fetchData)
           </div>
           <div class="space-y-1">
             <label class="text-xs font-bold text-gray-400 uppercase">Nama Lengkap</label>
-            <input v-model="formSiswa.namaLengkap" type="text" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required />
+            <input v-model="formSiswa.nama" type="text" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-1">

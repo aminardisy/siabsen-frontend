@@ -47,6 +47,12 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
+      path: '/absensi',
+      name: 'absensi',
+      component: () => import('../views/AttendanceView.vue'),
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'SEKRETARIS'] }
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
