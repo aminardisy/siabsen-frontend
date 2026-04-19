@@ -9,7 +9,7 @@ export interface SiswaResponse {
 
 export interface SiswaRequest {
   nisn: string;
-  nama: string;
+  namaLengkap: string;
   kelasId: number | null;
   jenisKelamin: string;
 }
