@@ -35,6 +35,12 @@ const router = createRouter({
       meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] }
     },
     {
+      path: '/catat-keterlambatan',
+      name: 'catat-keterlambatan',
+      component: () => import('../views/CatatKeterlambatanView.vue'),
+      meta: { requiresAuth: true, role: 'GURU' }
+    },
+    {
       path: '/accounts',
       name: 'accounts',
       component: () => import('@/views/AccountView.vue'),
@@ -57,6 +63,12 @@ const router = createRouter({
       name: 'janji-temu-edit',
       component: () => import('../views/JanjiTemuEditView.vue'),
       meta: { requiresAuth: true, role: 'KESISWAAN' }
+    },
+    {
+      path: '/absensi',
+      name: 'absensi',
+      component: () => import('../views/AttendanceView.vue'),
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'SEKRETARIS'] }
     },
     {
       path: '/about',

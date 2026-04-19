@@ -1,13 +1,15 @@
 export interface GuruResponse {
   id: number;
-  nip: string; // Sesuai GuruListItemResponse
+  nip: string; 
   nama: string;
   jabatan: string;
+  tipePegawai: 'GURU' | 'STAFF'; 
 }
 
 export interface GuruRequest {
   nama: string;
-  nuptk: string; // Sesuai CreateGuruRequest
-  jenisKelamin: 'LAKI_LAKI' | 'PEREMPUAN'; // Sesuai Enum Gender di BE
+  nuptk: string; 
+  jenisKelamin: 'LAKI_LAKI' | 'PEREMPUAN'; 
   mataPelajaran: string;
+  tipePegawai: string;
 }
