@@ -31,7 +31,7 @@ const isNisnHInvalid = computed(() => {
 // FIX: Tombol akan aktif jika namaLengkap sudah terisi
 const isFormValid = computed(() => {
   return (
-    formSiswa.value.namaLengkap && 
+    formSiswa.value.namaLengkap &&
     formSiswa.value.namaLengkap.trim().length > 0 &&
     formSiswa.value.nisn.length === 10 &&
     formSiswa.value.kelasId !== null &&
@@ -73,6 +73,15 @@ const handleSubmit = async () => {
   if (!isFormValid.value) return
 
   try {
+    const nisn = formSiswa.value.nisn.trim()
+
+    if (!/^\d{10}$/.test(nisn)) {
+      toast.error('NISN harus berupa 10 digit angka')
+      return
+    }
+
+    formSiswa.value.nisn = nisn
+
     if (modalMode.value === 'add') {
       await siswaService.create(formSiswa.value)
       toast.success('Siswa baru berhasil ditambahkan')

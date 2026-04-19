@@ -98,10 +98,10 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
   modalMode.value = mode
   if (mode === 'edit' && data) {
     const guruAsli = daftarGuru.value.find(g => g.nip === data.nipWaliKelas)
-    
+
     // Pecah nama kelas kembali ke form jika perlu (Asumsi format: "Tingkat Jurusan Nomor")
     const parts = data.namaKelas.split(' ')
-    
+
     formKelas.value = {
       id: data.id,
       tingkat: data.tingkat || parts[0],
@@ -237,8 +237,8 @@ onMounted(fetchData)
 
           <div class="flex gap-4 pt-6">
             <button type="button" @click="isModalOpen = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl">Batal</button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               :disabled="!isFormValid"
               :class="['flex-1 py-3 text-white rounded-xl font-bold shadow-xl transition-all', isFormValid ? 'bg-[#1A2342] hover:bg-slate-800' : 'bg-gray-300 cursor-not-allowed']"
             >
