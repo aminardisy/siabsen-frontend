@@ -6,6 +6,7 @@ export interface KelasResponse {
   namaWaliKelas: string;
   nipWaliKelas: string;
   jumlahSiswa: number;
+  tahunAjaran: string;
 }
 
 export interface KelasRequest {
@@ -13,5 +14,6 @@ export interface KelasRequest {
   tingkat: string;
   jurusan: string;
   guruId: number | null;
+  tahunAjaran: string;
 }
 

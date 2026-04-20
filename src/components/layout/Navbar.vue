@@ -39,6 +39,7 @@ const currentPageTitle = computed(() => {
   if (path.startsWith('/data-kelas')) return 'Data Kelas'
   if (path.startsWith('/accounts')) return 'Manajemen Akun'
   if (path.startsWith('/roles')) return 'Manajemen Role'
+  if (path.startsWith('/janji-temu')) return 'Janji Temu'
   return 'SiAbsen'
 })
 

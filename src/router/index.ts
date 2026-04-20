@@ -53,6 +53,24 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
+      path: '/janji-temu/create',
+      name: 'janji-temu-create',
+      component: () => import('../views/JanjiTemuCreateView.vue'),
+      meta: { requiresAuth: true, role: 'KESISWAAN' }
+    },
+    {
+      path: '/janji-temu/edit/:id',
+      name: 'janji-temu-edit',
+      component: () => import('../views/JanjiTemuEditView.vue'),
+      meta: { requiresAuth: true, role: 'KESISWAAN' }
+    },
+    {
+      path: '/absensi',
+      name: 'absensi',
+      component: () => import('../views/AttendanceView.vue'),
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'SEKRETARIS'] }
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
