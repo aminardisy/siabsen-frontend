@@ -6,7 +6,7 @@
     ]"
   >
     <div
-      class="relative bg-[#26A69A] flex flex-col items-center justify-center rounded-b-[2rem] shadow-lg mb-8 transition-all duration-300"
+      class="relative bg-[#26A69A] flex flex-col items-center justify-center rounded-b-4xl shadow-lg mb-8 transition-all duration-300"
       :class="uiStore.isSidebarCollapsed ? 'p-6 h-20' : 'p-8'"
     >
       <button
@@ -27,7 +27,7 @@
       />
     </div>
 
-    <nav class="flex-grow space-y-1 overflow-y-auto px-2 custom-scrollbar flex flex-col">
+    <nav class="grow space-y-1 overflow-y-auto px-2 custom-scrollbar flex flex-col">
 
       <SidebarItem to="/" label="Dashboard" :active="route.path === '/'" :isCollapsed="uiStore.isSidebarCollapsed">
         <template #icon>
@@ -38,9 +38,23 @@
       </SidebarItem>
 
       <SidebarItem
+        v-if="['GURU', 'ADMIN'].includes(authStore.user?.role)"
+        to="/catat-keterlambatan"
+        label="Keterlambatan"
+        :active="route.path.startsWith('/catat-keterlambatan')"
+        :isCollapsed="uiStore.isSidebarCollapsed"
+      >
+        <template #icon>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+          </svg>
+        </template>
+      </SidebarItem>
+
+      <SidebarItem
         v-if="['GURU', 'SEKRETARIS'].includes(authStore.user?.role)"
         to="/absensi"
-        label="Input Absensi"
+        label="Absensi"
         :active="route.path.startsWith('/absensi')"
         :isCollapsed="uiStore.isSidebarCollapsed"
       >
