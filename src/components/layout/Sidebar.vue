@@ -66,8 +66,8 @@
       </SidebarItem>
 
       <SidebarItem
-        v-if="['KESISWAAN', 'SEKRETARIS'].includes(authStore.user?.role)"
-        to="/janji-temu/create"
+        v-if="['GURU', 'SEKRETARIS'].includes(authStore.user?.role)"
+        to="/janji-temu"
         label="Janji Temu"
         :active="route.path.startsWith('/janji-temu')"
         :isCollapsed="uiStore.isSidebarCollapsed"
