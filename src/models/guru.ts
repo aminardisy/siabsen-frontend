@@ -3,13 +3,13 @@ export interface GuruResponse {
   nip: string; 
   nama: string;
   jabatan: string;
-  tipePegawai: 'GURU' | 'STAFF'; 
+  tipePegawai: 'GURU' | 'STAF'; 
 }
 
 export interface GuruRequest {
   nama: string;
   nuptk: string; 
   jenisKelamin: 'LAKI_LAKI' | 'PEREMPUAN'; 
-  mataPelajaran: string;
-  tipePegawai: string;
+  mataPelajaran?: string;
+  tipePegawai: 'GURU' | 'STAF';
 }

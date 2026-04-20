@@ -53,6 +53,17 @@ const filteredKelas = computed(() => {
   )
 })
 
+const availableWaliKelas = computed(() => {
+  const assignedNipByOtherKelas = new Set(
+    kelasList.value
+      .filter(k => modalMode.value !== 'edit' || k.id !== formKelas.value.id)
+      .map(k => k.nipWaliKelas)
+      .filter((nip: string) => nip && nip !== '-')
+  )
+
+  return daftarGuru.value.filter(g => g.tipePegawai === 'GURU' && !assignedNipByOtherKelas.has(g.nip))
+})
+
 // 5. API Functions
 const fetchData = async () => {
   try {
@@ -231,8 +242,11 @@ onMounted(fetchData)
             <label class="text-xs font-bold text-gray-400 uppercase ml-1">Pilih Wali Kelas</label>
             <select v-model="formKelas.guruId" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required>
               <option :value="null" disabled>-- Pilih Guru --</option>
-              <option v-for="g in daftarGuru" :key="g.id" :value="g.id">{{ g.nama }}</option>
+              <option v-for="g in availableWaliKelas" :key="g.id" :value="g.id">{{ g.nama }}</option>
             </select>
+            <p v-if="availableWaliKelas.length === 0" class="text-[10px] text-amber-600 font-bold ml-1">
+              Semua guru sudah menjadi wali kelas.
+            </p>
           </div>
 
           <div class="flex gap-4 pt-6">
