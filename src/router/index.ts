@@ -38,7 +38,7 @@ const router = createRouter({
       path: '/catat-keterlambatan',
       name: 'catat-keterlambatan',
       component: () => import('../views/CatatKeterlambatanView.vue'),
-      meta: { requiresAuth: true, role: 'GURU' }
+      meta: { requiresAuth: true, role: ['GURU', 'ADMIN'] }
     },
     {
       path: '/accounts',
@@ -53,16 +53,28 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'ADMIN' }
     },
     {
+      path: '/janji-temu',
+      name: 'janji-temu-list',
+      component: () => import('../views/JanjiTemuListView.vue'),
+      meta: { requiresAuth: true, role: ['SEKRETARIS', 'GURU'] }
+    },
+    {
       path: '/janji-temu/create',
       name: 'janji-temu-create',
       component: () => import('../views/JanjiTemuCreateView.vue'),
-      meta: { requiresAuth: true, role: ['KESISWAAN', 'SEKRETARIS'] }
+      meta: { requiresAuth: true, role: ['SEKRETARIS'] }
     },
     {
       path: '/janji-temu/edit/:id',
       name: 'janji-temu-edit',
       component: () => import('../views/JanjiTemuEditView.vue'),
-      meta: { requiresAuth: true, role: ['KESISWAAN', 'SEKRETARIS'] }
+      meta: { requiresAuth: true, role: ['SEKRETARIS'] }
+    },
+    {
+      path: '/janji-temu/:id',
+      name: 'janji-temu-detail',
+      component: () => import('../views/JanjiTemuDetailView.vue'),
+      meta: { requiresAuth: true, role: ['SEKRETARIS', 'GURU'] }
     },
     {
       path: '/absensi',

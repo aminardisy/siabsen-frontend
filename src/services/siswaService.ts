@@ -6,8 +6,11 @@ export const siswaService = {
   // Mengambil semua siswa
   getAll: async (): Promise<SiswaResponse[]> => {
     const response = await api.get('/siswa');
-    // Mengambil property 'data' dari BaseResponseDTO backend
-    return response.data;
+    // Menormalkan response backend agar seluruh view bisa memakai nama/namaLengkap.
+    return response.data.map((siswa: SiswaResponse) => ({
+      ...siswa,
+      namaLengkap: siswa.nama,
+    }));
   },
 
   // Membuat siswa baru (Mengirim SiswaRequest)
