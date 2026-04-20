@@ -91,7 +91,7 @@ const router = createRouter({
       path: '/dispensasi',
       name: 'dispensasi',
       component: () => import('@/views/DispensasiView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, role: ['ADMIN', 'PIKET'] }
     },
   ],
 })
