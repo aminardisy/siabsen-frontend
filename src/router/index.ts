@@ -71,6 +71,12 @@ const router = createRouter({
       meta: { requiresAuth: true, role: ['SEKRETARIS'] }
     },
     {
+      path: '/janji-temu/:id',
+      name: 'janji-temu-detail',
+      component: () => import('../views/JanjiTemuDetailView.vue'),
+      meta: { requiresAuth: true, role: ['SEKRETARIS', 'GURU'] }
+    },
+    {
       path: '/absensi',
       name: 'absensi',
       component: () => import('../views/AttendanceView.vue'),

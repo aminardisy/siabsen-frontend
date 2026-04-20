@@ -56,6 +56,10 @@ const statusClassMap: Record<JanjiTemuStatus, string> = {
   FINISHED: 'bg-slate-100 text-slate-700',
 }
 
+const openDetail = (id: number) => {
+  router.push(`/janji-temu/${id}`)
+}
+
 onMounted(fetchJanjiTemuList)
 </script>
 
@@ -65,6 +69,7 @@ onMounted(fetchJanjiTemuList)
       <div>
         <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Daftar Janji Temu</h1>
         <p class="text-gray-500">Menampilkan jadwal janji temu sesuai akses pengguna yang sedang login.</p>
+        <p class="text-xs text-gray-400 mt-1">Klik baris data untuk melihat detail janji temu.</p>
       </div>
 
       <button
@@ -101,7 +106,15 @@ onMounted(fetchJanjiTemuList)
         </thead>
 
         <tbody class="divide-y divide-gray-50">
-          <tr v-for="item in janjiTemuList" :key="item.id" class="hover:bg-slate-50 transition-colors">
+          <tr
+            v-for="item in janjiTemuList"
+            :key="item.id"
+            class="hover:bg-slate-50 transition-colors cursor-pointer"
+            tabindex="0"
+            @click="openDetail(item.id)"
+            @keydown.enter="openDetail(item.id)"
+            @keydown.space.prevent="openDetail(item.id)"
+          >
             <td class="px-6 py-4 text-sm font-medium text-gray-700">{{ formatTanggal(item.tanggal) }}</td>
             <td class="px-6 py-4 text-sm font-semibold text-gray-500 font-mono">{{ formatWaktu(item.waktu) }}</td>
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ item.namaSiswa }}</td>
@@ -117,7 +130,7 @@ onMounted(fetchJanjiTemuList)
             </td>
             <td v-if="canManageJanjiTemu" class="px-6 py-4 text-center">
               <button
-                @click="router.push(`/janji-temu/edit/${item.id}`)"
+                @click.stop="router.push(`/janji-temu/edit/${item.id}`)"
                 class="px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
               >
                 Edit
