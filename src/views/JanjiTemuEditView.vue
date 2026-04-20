@@ -35,7 +35,7 @@ const errors = ref({
 const fetchData = async () => {
   if (!janjiTemuId) {
     toast.error('ID Janji Temu tidak valid')
-    router.push('/')
+    router.push('/janji-temu')
     return
   }
 
@@ -61,7 +61,7 @@ const fetchData = async () => {
 
   } catch {
     toast.error('Gagal memuat data form atau menemukan janji temu')
-    router.push('/') // Redirect jika data ganti gagal/tidak ada agar tidak stuck 404 UI manual
+    router.push('/janji-temu') // Redirect jika data ganti gagal/tidak ada agar tidak stuck 404 UI manual
   } finally {
     isLoadingData.value = false
   }
@@ -109,8 +109,7 @@ const handleSubmit = async () => {
     })
 
     toast.success('Janji temu berhasil diperbarui')
-    // Setelah update, biasanya akan di-redirect ke list, tapi kali ini redirect ke home agar tidak ganggu list rekanan
-    router.push('/')
+    router.push('/janji-temu')
   } catch (error: any) {
     const message = error.response?.data?.message || 'Gagal mengubah janji temu'
     toast.error(message)
@@ -125,7 +124,7 @@ const handleDelete = async () => {
   try {
     await janjiTemuService.delete(janjiTemuId)
     toast.success('Janji temu berhasil dihapus')
-    router.push('/')
+    router.push('/janji-temu')
   } catch (error: any) {
     const message = error.response?.data?.message || 'Gagal menghapus janji temu'
     toast.error(message)
@@ -205,7 +204,7 @@ onMounted(fetchData)
           </button>
           <button
             type="button"
-            @click="router.push('/')"
+            @click="router.push('/janji-temu')"
             :disabled="isSubmitting || isDeleting"
             class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all disabled:opacity-50"
           >

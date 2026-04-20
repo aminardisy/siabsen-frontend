@@ -10,12 +10,42 @@ export interface JanjiTemuUpdateRequest {
   keperluan: string
 }
 
-export interface JanjiTemuResponse {
+export type JanjiTemuStatus = 'WAITING' | 'APPROVED' | 'REJECTED' | 'FINISHED'
+
+export interface JanjiTemuListItemResponse {
   id: number
-  siswa: unknown
-  guru: unknown
+  tanggal: string
+  waktu: string
+  namaSiswa: string
+  status: JanjiTemuStatus
+}
+
+export interface JanjiTemuDetailResponse {
+  id: number
+  tanggal: string
+  waktu: string
   keperluan: string
-  status: 'WAITING' | 'APPROVED' | 'REJECTED' | 'FINISHED'
+  status: JanjiTemuStatus
   waktuPengajuan: string
   waktuKonfirmasi: string | null
+  siswa: {
+    id: number
+    nisn: string
+    nama: string
+    namaKelas: string
+  }
+  guru: {
+    id: number
+    nama: string
+    nuptk: string
+  }
+}
+
+export interface JanjiTemuResponse {
+  id: number
+  namaSiswa: string
+  namaGuru: string
+  keperluan: string
+  status: JanjiTemuStatus
+  waktuPengajuan: string
 }

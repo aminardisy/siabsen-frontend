@@ -98,7 +98,7 @@ const handleSubmit = async () => {
 
     toast.success('Janji temu berhasil dibuat')
     resetForm()
-    router.push('/')
+    router.push('/janji-temu')
   } catch (error: any) {
     const message = error.response?.data?.message || 'Gagal membuat janji temu'
     toast.error(message)
@@ -169,7 +169,7 @@ onMounted(fetchFormOptions)
         <div class="flex gap-4 pt-4">
           <button
             type="button"
-            @click="router.push('/')"
+            @click="router.push('/janji-temu')"
             :disabled="isSubmitting"
             class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all disabled:opacity-50"
           >
