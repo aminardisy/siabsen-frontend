@@ -16,6 +16,7 @@ interface KeterlambatanHistoryItem {
   id: number
   namaSiswa: string
   namaKelas: string
+  tanggal: string
   waktuMasuk: string
   alasanTerlambat: string
 }
@@ -46,6 +47,21 @@ const formatClock = (date: Date) => {
     minute: '2-digit',
     hour12: false,
   }).format(date)
+}
+
+const formatTanggalLabel = (tanggal: string) => {
+  if (!tanggal) return '-'
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(`${tanggal}T00:00:00`))
+}
+
+const formatJamLabel = (waktu: string) => {
+  if (!waktu) return '-'
+  return waktu.slice(0, 5)
 }
 
 const getSiswaLabel = (siswa: SiswaResponse) => siswa.namaLengkap ?? siswa.nama
@@ -90,6 +106,12 @@ const resolvedReason = computed(() => {
   return form.value.alasanPreset.trim()
 })
 
+const detailPreview = computed(() => ({
+  alasan: resolvedReason.value || 'Belum diisi',
+  jam: form.value.waktuMasuk ? formatJamLabel(form.value.waktuMasuk) : '--:--',
+  tanggal: form.value.tanggal ? formatTanggalLabel(form.value.tanggal) : '-',
+}))
+
 const fetchSiswa = async () => {
   isLoadingSiswa.value = true
   try {
@@ -118,6 +140,7 @@ const fetchRiwayatHariIni = async () => {
       id: item.id,
       namaSiswa: item.namaSiswa,
       namaKelas: item.namaKelas ?? '-',
+      tanggal: item.tanggal,
       waktuMasuk: item.waktuMasuk,
       alasanTerlambat: item.alasanTerlambat,
     }))
@@ -138,6 +161,16 @@ const selectSiswa = (siswa: SiswaResponse) => {
 const onSearchInput = () => {
   selectedSiswa.value = null
   errors.value.siswaId = ''
+}
+
+const handlePresetClick = (reason: string) => {
+  form.value.alasanPreset = reason
+}
+
+const handlePresetDoubleClick = (reason: string) => {
+  if (form.value.alasanPreset === reason) {
+    form.value.alasanPreset = ''
+  }
 }
 
 const validateForm = () => {
@@ -297,30 +330,49 @@ onBeforeUnmount(() => {
             <span>Next &rarr;</span>
           </div>
 
-          <form class="rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="submitForm">
-            <h2 class="mb-4 text-4xl font-bold text-[#1A2342]">Alasan Telat</h2>
+            <form class="rounded-xl border border-slate-200 bg-white p-6" @submit.prevent="submitForm">
+              <h2 class="mb-4 text-lg font-bold text-[#1A2342]">Alasan Telat</h2>
 
             <div class="mb-4 grid grid-cols-2 gap-3">
               <button
                 v-for="reason in reasonPresets"
                 :key="reason"
                 type="button"
-                class="rounded-xl border px-4 py-3 text-xl font-bold capitalize transition"
+                  class="rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition"
                 :class="form.alasanPreset === reason ? 'border-[#1A2342] bg-[#1A2342] text-white' : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'"
-                @click="form.alasanPreset = reason"
+                  @click="handlePresetClick(reason)"
+                  @dblclick="handlePresetDoubleClick(reason)"
               >
                 {{ reason }}
               </button>
             </div>
 
             <div class="mb-4">
-              <label class="mb-2 block text-lg font-medium text-slate-700">lainnya</label>
+              <label class="mb-2 block text-sm font-medium text-slate-700">Lainnya</label>
               <textarea
                 v-model="form.alasanLainnya"
                 rows="3"
-                class="w-full rounded-xl border border-slate-200 bg-[#fbfcff] px-4 py-3 text-xl outline-none transition focus:border-[#26A69A]"
+                class="w-full rounded-xl border border-slate-200 bg-[#fbfcff] px-4 py-3 text-sm outline-none transition focus:border-[#26A69A]"
               />
               <p v-if="errors.alasanTerlambat" class="mt-1 text-sm text-red-500">{{ errors.alasanTerlambat }}</p>
+            </div>
+
+            <div class="mb-5 rounded-xl border border-[#dbe7ff] bg-gradient-to-br from-[#f8fbff] to-[#eef5ff] p-4">
+              <p class="mb-3 text-xs font-bold uppercase tracking-wider text-[#64748b]">Detail Keterlambatan</p>
+              <div class="grid gap-3 md:grid-cols-3">
+                <div class="rounded-lg border border-white/60 bg-white/90 p-3 shadow-sm">
+                  <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Alasan</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-700">{{ detailPreview.alasan }}</p>
+                </div>
+                <div class="rounded-lg border border-white/60 bg-white/90 p-3 shadow-sm">
+                  <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Jam</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-700">{{ detailPreview.jam }}</p>
+                </div>
+                <div class="rounded-lg border border-white/60 bg-white/90 p-3 shadow-sm">
+                  <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Tanggal</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-700">{{ detailPreview.tanggal }}</p>
+                </div>
+              </div>
             </div>
 
             <div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -369,17 +421,31 @@ onBeforeUnmount(() => {
           <article
             v-for="item in historyHariIni"
             :key="item.id"
-            class="rounded-xl border border-slate-200 bg-white p-3"
+            class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#c9d9f8] hover:shadow"
           >
-            <div class="grid grid-cols-[1fr_auto] gap-3">
-              <div>
-                <p class="text-3xl font-bold leading-none text-[#1A2342]">{{ item.waktuMasuk }}</p>
-                <p class="mt-2 text-lg font-semibold text-slate-700">{{ item.namaSiswa }}</p>
-                <p class="text-base text-slate-500">{{ item.namaKelas }}</p>
+            <div class="space-y-3">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-bold text-[#1A2342]">{{ item.namaSiswa }}</p>
+                  <p class="text-xs text-slate-500">{{ item.namaKelas }}</p>
+                </div>
+                <span class="rounded-full bg-[#eef4ff] px-2.5 py-1 text-[11px] font-bold text-[#1A4FA3]">Terlambat</span>
               </div>
 
-              <div class="h-fit rounded-lg border border-slate-200 bg-[#f7f8fa] px-3 py-2 text-center text-base text-slate-600">
-                {{ item.alasanTerlambat }}
+              <div class="grid gap-2 sm:grid-cols-2">
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                  <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Jam</p>
+                  <p class="text-sm font-semibold text-slate-700">{{ formatJamLabel(item.waktuMasuk) }}</p>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                  <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Tanggal</p>
+                  <p class="text-sm font-semibold text-slate-700">{{ formatTanggalLabel(item.tanggal) }}</p>
+                </div>
+              </div>
+
+              <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Alasan</p>
+                <p class="text-sm text-slate-700">{{ item.alasanTerlambat }}</p>
               </div>
             </div>
           </article>
