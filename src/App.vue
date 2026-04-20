@@ -18,6 +18,7 @@
       </div>
     </main>
   </div>
+  <Toaster position="top-right" richColors closeButton />
 </template>
 
 <script setup lang="ts">
@@ -25,6 +26,7 @@ import Sidebar from '@/components/layout/Sidebar.vue'
 import Navbar from '@/components/layout/Navbar.vue'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import { Toaster } from 'vue-sonner'
 
 const uiStore = useUIStore()
 const authStore = useAuthStore()

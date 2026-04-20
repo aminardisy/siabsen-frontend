@@ -34,6 +34,7 @@ const authStore = useAuthStore()
 const currentPageTitle = computed(() => {
   const path = route.path
   if (path === '/') return 'Dashboard'
+  if (path.startsWith('/catat-keterlambatan')) return 'Sistem Pencatatan Keterlambatan'
   if (path.startsWith('/data-siswa')) return 'Data Siswa'
   if (path.startsWith('/data-guru')) return 'Data Guru & Staf'
   if (path.startsWith('/data-kelas')) return 'Data Kelas'
