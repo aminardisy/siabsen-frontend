@@ -12,15 +12,23 @@ const authStore = useAuthStore()
 
 const janjiTemuId = Number(route.params.id)
 const isLoading = ref(false)
+const isUpdatingStatus = ref(false)
 const detail = ref<JanjiTemuDetailResponse | null>(null)
 
 const canEdit = computed(() => authStore.user?.role === 'SEKRETARIS')
+const canUpdateStatus = computed(() => authStore.user?.role === 'GURU')
 
 const statusLabelMap: Record<JanjiTemuStatus, string> = {
   WAITING: 'Menunggu',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
+  // APPROVED: 'Disetujui',
+  // REJECTED: 'Ditolak',
   FINISHED: 'Selesai',
+}
+
+const statusOptions: JanjiTemuStatus[] = ['WAITING','FINISHED']
+
+const isStatusOptionDisabled = (currentStatus: JanjiTemuStatus, optionStatus: JanjiTemuStatus) => {
+  return optionStatus !== currentStatus && optionStatus !== 'FINISHED'
 }
 
 const statusClassMap: Record<JanjiTemuStatus, string> = {
@@ -65,6 +73,25 @@ const fetchDetail = async () => {
   }
 }
 
+const handleStatusChange = async (event: Event) => {
+  if (!detail.value) return
+
+  const selectedStatus = (event.target as HTMLSelectElement).value as JanjiTemuStatus
+  if (!selectedStatus || selectedStatus === detail.value.status) return
+
+  isUpdatingStatus.value = true
+  try {
+    const response = await janjiTemuService.updateStatus(detail.value.id, { status: selectedStatus })
+    detail.value.status = response.data.status
+    toast.success(response.message || 'Status janji temu berhasil diperbarui')
+  } catch (error: any) {
+    const message = error.response?.data?.message || 'Gagal memperbarui status janji temu'
+    toast.error(message)
+  } finally {
+    isUpdatingStatus.value = false
+  }
+}
+
 onMounted(fetchDetail)
 </script>
 
@@ -93,6 +120,23 @@ onMounted(fetchDetail)
         >
           Edit Janji Temu
         </button>
+
+        <select
+          v-if="canUpdateStatus && detail"
+          :value="detail.status"
+          @change="handleStatusChange"
+          :disabled="detail.status === 'FINISHED' || isUpdatingStatus"
+          class="px-4 py-2 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-700 outline-none focus:ring-2 focus:ring-[#26A69A] disabled:bg-gray-100 disabled:text-gray-400"
+        >
+          <option
+            v-for="status in statusOptions"
+            :key="status"
+            :value="status"
+            :disabled="isStatusOptionDisabled(detail.status, status)"
+          >
+            {{ statusLabelMap[status] }}
+          </option>
+        </select>
       </div>
     </div>
 
