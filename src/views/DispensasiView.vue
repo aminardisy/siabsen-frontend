@@ -171,13 +171,14 @@
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">No</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Siswa</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Periode</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Jenis</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Status</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr v-if="dispensasiStore.dispensasiList.length === 0">
-                <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-sm">Belum ada data dispensasi</td>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm">Belum ada data dispensasi</td>
               </tr>
               <tr
                 v-for="(item, index) in dispensasiStore.dispensasiList"
@@ -192,20 +193,59 @@
                 <td class="px-6 py-4 text-sm text-slate-600">
                   {{ formatDate(item.tanggalMulai) }} – {{ formatDate(item.tanggalSelesai) }}
                 </td>
+                <!-- Tambah ini -->
+                <td class="px-6 py-4 text-center">
+                  <span
+                    :class="{
+                      'bg-blue-100 text-blue-600':     item.jenis === 'DISPENSASI',
+                      'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
+                      'bg-green-100 text-green-600':   item.jenis === 'IZIN',
+                    }"
+                    class="px-2.5 py-1 rounded-full text-[11px] font-bold"
+                  >
+                    {{ { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[item.jenis] || '-' }}
+                  </span>
+                </td>
                 <td class="px-6 py-4 text-center">
                   <span :class="badgeClass(item.statusApproval)" class="px-3 py-1 rounded-full text-[11px] font-bold">
                     {{ item.statusApproval }}
                   </span>
                 </td>
+
                 <td class="px-6 py-4 text-center">
-                  <button
-                    v-if="item.statusApproval !== 'CLOSED'"
-                    @click="openEditModal(item)"
-                    class="px-4 py-1.5 bg-slate-100 hover:bg-[#26A69A] hover:text-white text-slate-600 rounded-lg text-xs font-semibold transition-all"
-                  >
-                    Edit
-                  </button>
-                  <span v-else class="text-xs text-gray-300 font-medium">Closed</span>
+                  <div class="flex items-center justify-center gap-2">
+
+                    <!-- Tombol Edit -->
+                    <button
+                      v-if="item.statusApproval !== 'CLOSED'"
+                      @click="openEditModal(item)"
+                      class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+
+                    <!-- Dropdown Update Status (hanya jika bukan CLOSED) -->
+                    <select
+                      v-if="item.statusApproval !== 'CLOSED'"
+                      @change="handleUpdateStatus(item.id, ($event.target as HTMLSelectElement).value)"
+                      :value="item.statusApproval"
+                      class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[#26A69A] cursor-pointer font-semibold"
+                      :class="{
+                        'text-yellow-600 bg-yellow-50': item.statusApproval === 'PENDING',
+                        'text-green-600 bg-green-50':  item.statusApproval === 'APPROVED',
+                        'text-red-500 bg-red-50':      item.statusApproval === 'REJECTED',
+                      }"
+                    >
+                      <option value="PENDING">Pending</option>
+                      <option value="APPROVED">Approved</option>
+                      <option value="REJECTED">Rejected</option>
+                      <option value="CLOSED">Closed</option>
+                    </select>
+
+                    <span v-if="item.statusApproval === 'CLOSED'" class="text-xs text-gray-300 font-medium">Closed</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -538,6 +578,7 @@ const submitCreate = async () => {
       tanggalMulai: form.value.tanggalMulai,
       tanggalSelesai: form.value.tanggalSelesai,
       alasan: form.value.alasan,
+      jenis: form.value.type,
       buktiDocUrl: form.value.buktiDocUrl || null
     })
     showPreviewModal.value = false
@@ -586,12 +627,23 @@ const submitEdit = async () => {
       tanggalMulai: editForm.value.tanggalMulai,
       tanggalSelesai: editForm.value.tanggalSelesai,
       alasan: editForm.value.alasan,
-      buktiDocUrl: editForm.value.buktiDocUrl || null
+      buktiDocUrl: editForm.value.buktiDocUrl || null,
     })
     showEditModal.value = false
     showToast('Dispensasi berhasil diupdate!', 'success')
   } catch (e: any) {
     editError.value = e.response?.data?.message || 'Gagal mengupdate dispensasi'
+  }
+}
+
+// Update status dispensasi
+const handleUpdateStatus = async (id: number, status: string) => {
+  if (!status) return
+  try {
+    await dispensasiStore.updateStatus(id, status)
+    showToast(`Status berhasil diubah ke ${status}`, 'success')
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Gagal mengubah status', 'error')
   }
 }
 
