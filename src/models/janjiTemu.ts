@@ -10,6 +10,10 @@ export interface JanjiTemuUpdateRequest {
   keperluan: string
 }
 
+export interface JanjiTemuStatusUpdateRequest {
+  status: JanjiTemuStatus
+}
+
 export type JanjiTemuStatus = 'WAITING' | 'APPROVED' | 'REJECTED' | 'FINISHED'
 
 export interface JanjiTemuListItemResponse {
