@@ -20,9 +20,15 @@ const canUpdateStatus = computed(() => authStore.user?.role === 'GURU')
 
 const statusLabelMap: Record<JanjiTemuStatus, string> = {
   WAITING: 'Menunggu',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
+  // APPROVED: 'Disetujui',
+  // REJECTED: 'Ditolak',
   FINISHED: 'Selesai',
+}
+
+const statusOptions: JanjiTemuStatus[] = ['WAITING','FINISHED']
+
+const isStatusOptionDisabled = (currentStatus: JanjiTemuStatus, optionStatus: JanjiTemuStatus) => {
+  return optionStatus !== currentStatus && optionStatus !== 'FINISHED'
 }
 
 const statusClassMap: Record<JanjiTemuStatus, string> = {
@@ -120,10 +126,16 @@ onMounted(fetchDetail)
           :value="detail.status"
           @change="handleStatusChange"
           :disabled="detail.status === 'FINISHED' || isUpdatingStatus"
-          class="px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-gray-200 text-gray-700 outline-none focus:ring-2 focus:ring-[#26A69A] disabled:bg-gray-100 disabled:text-gray-400"
+          class="px-4 py-2 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-700 outline-none focus:ring-2 focus:ring-[#26A69A] disabled:bg-gray-100 disabled:text-gray-400"
         >
-          <option :value="detail.status">{{ statusLabelMap[detail.status] }}</option>
-          <option v-if="detail.status !== 'FINISHED'" value="FINISHED">Selesai</option>
+          <option
+            v-for="status in statusOptions"
+            :key="status"
+            :value="status"
+            :disabled="isStatusOptionDisabled(detail.status, status)"
+          >
+            {{ statusLabelMap[status] }}
+          </option>
         </select>
       </div>
     </div>

@@ -46,9 +46,15 @@ const formatWaktu = (waktu: string) => {
 
 const statusLabelMap: Record<JanjiTemuStatus, string> = {
   WAITING: 'Menunggu',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
+  // APPROVED: 'Disetujui',
+  // REJECTED: 'Ditolak',
   FINISHED: 'Selesai',
+}
+
+const statusOptions: JanjiTemuStatus[] = ['WAITING','FINISHED']
+
+const isStatusOptionDisabled = (currentStatus: JanjiTemuStatus, optionStatus: JanjiTemuStatus) => {
+  return optionStatus !== currentStatus && optionStatus !== 'FINISHED'
 }
 
 const statusClassMap: Record<JanjiTemuStatus, string> = {
@@ -162,10 +168,16 @@ onMounted(fetchJanjiTemuList)
                 @click.stop
                 @change="handleStatusChange(item, $event)"
                 :disabled="item.status === 'FINISHED' || updatingStatusId === item.id"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-gray-200 text-gray-700 outline-none focus:ring-2 focus:ring-[#26A69A] disabled:bg-gray-100 disabled:text-gray-400"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 outline-none focus:ring-2 focus:ring-[#26A69A] disabled:bg-gray-100 disabled:text-gray-400"
               >
-                <option :value="item.status">{{ statusLabelMap[item.status] }}</option>
-                <option v-if="item.status !== 'FINISHED'" value="FINISHED">Selesai</option>
+                <option
+                  v-for="status in statusOptions"
+                  :key="status"
+                  :value="status"
+                  :disabled="isStatusOptionDisabled(item.status, status)"
+                >
+                  {{ statusLabelMap[status] }}
+                </option>
               </select>
             </td>
           </tr>
