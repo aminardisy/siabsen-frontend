@@ -13,7 +13,10 @@ const modalMode = ref<'add' | 'edit'>('add')
 
 // Options untuk Dropdown
 const mapelOptions = ['Informatika', 'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Fisika', 'Biologi', 'Seni Budaya', 'PJOK']
-const tipePegawaiOptions = ['GURU', 'STAFF']
+const tipePegawaiOptions: Array<{ label: string, value: 'GURU' | 'STAF' }> = [
+  { label: 'GURU', value: 'GURU' },
+  { label: 'STAF', value: 'STAF' }
+]
 
 const formGuru = ref<GuruRequest & { id?: number }>({
   id: undefined,
@@ -24,6 +27,8 @@ const formGuru = ref<GuruRequest & { id?: number }>({
   tipePegawai: 'GURU'
 })
 
+const isGuruType = computed(() => formGuru.value.tipePegawai === 'GURU')
+
 // 2. Logic: Validasi
 const isNuptkInvalid = computed(() => {
   const val = formGuru.value.nuptk
@@ -31,10 +36,12 @@ const isNuptkInvalid = computed(() => {
 })
 
 const isFormValid = computed(() => {
+  const isMapelValid = !isGuruType.value || (formGuru.value.mataPelajaran?.trim() ?? '').length > 0
+
   return (
     formGuru.value.nama.trim().length > 0 &&
     formGuru.value.nuptk.length === 16 &&
-    formGuru.value.mataPelajaran !== '' &&
+    isMapelValid &&
     !isNuptkInvalid.value
   )
 })
@@ -87,7 +94,7 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
       nuptk: data.nip,
       jenisKelamin: data.jenisKelamin || 'LAKI_LAKI',
       mataPelajaran: data.jabatan,
-      tipePegawai: (data.tipePegawai as 'GURU' | 'STAFF') || 'GURU'
+      tipePegawai: (data.tipePegawai as 'GURU' | 'STAF') || 'GURU'
     }
   } else {
     formGuru.value = { id: undefined, nama: '', nuptk: '', jenisKelamin: 'LAKI_LAKI', mataPelajaran: '', tipePegawai: 'GURU' }
@@ -98,12 +105,17 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
 const handleSubmit = async () => {
   if (!isFormValid.value) return
 
+  const payload: GuruRequest = {
+    ...formGuru.value,
+    mataPelajaran: isGuruType.value ? formGuru.value.mataPelajaran : ''
+  }
+
   try {
     if (modalMode.value === 'add') {
-      await guruService.create(formGuru.value)
+      await guruService.create(payload)
       toast.success('Guru baru berhasil ditambahkan')
     } else {
-      await guruService.update(formGuru.value.id!, formGuru.value)
+      await guruService.update(formGuru.value.id!, payload)
       toast.success('Data guru berhasil diperbarui')
     }
     isModalOpen.value = false
@@ -189,17 +201,17 @@ onMounted(fetchData)
             <label class="text-xs font-bold text-gray-400 uppercase ml-1">Tipe Pegawai</label>
             <div class="flex gap-2">
               <button 
-                v-for="tipe in tipePegawaiOptions" :key="tipe"
+                v-for="tipe in tipePegawaiOptions" :key="tipe.value"
                 type="button"
-                @click="formGuru.tipePegawai = tipe as 'GURU' | 'STAFF'"
+                @click="formGuru.tipePegawai = tipe.value"
                 :class="[
                   'flex-1 py-2 rounded-xl text-xs font-black transition-all border',
-                  formGuru.tipePegawai === tipe 
+                  formGuru.tipePegawai === tipe.value 
                     ? 'bg-[#1A2342] text-white border-[#1A2342]' 
                     : 'bg-white text-gray-400 border-gray-100 hover:bg-gray-50'
                 ]"
               >
-                {{ tipe }}
+                {{ tipe.label }}
               </button>
             </div>
           </div>
@@ -224,7 +236,7 @@ onMounted(fetchData)
             </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div :class="['grid gap-4', isGuruType ? 'grid-cols-2' : 'grid-cols-1']">
             <div class="space-y-1">
               <label class="text-xs font-bold text-gray-400 uppercase ml-1">Jenis Kelamin</label>
               <select v-model="formGuru.jenisKelamin" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]">
@@ -232,9 +244,13 @@ onMounted(fetchData)
                 <option value="PEREMPUAN">Perempuan</option>
               </select>
             </div>
-            <div class="space-y-1">
-              <label class="text-xs font-bold text-gray-400 uppercase ml-1">Mata Pelajaran</label>
-              <select v-model="formGuru.mataPelajaran" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required>
+            <div v-if="isGuruType" class="space-y-1">
+              <label class="text-xs font-bold text-gray-400 uppercase ml-1">Mata Pelajaran *</label>
+              <select
+                v-model="formGuru.mataPelajaran"
+                class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+                required
+              >
                 <option value="" disabled>Pilih Mapel</option>
                 <option v-for="opt in mapelOptions" :key="opt" :value="opt">{{ opt }}</option>
               </select>
