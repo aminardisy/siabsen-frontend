@@ -12,6 +12,7 @@ export interface Dispensasi {
   tanggalSelesai: string
   alasan: string
   buktiDocUrl: string | null
+  jenis: string
   statusApproval: ApprovalStatus
 }
 
@@ -20,6 +21,7 @@ export interface CreateDispensasiPayload {
   tanggalMulai: string
   tanggalSelesai: string
   alasan: string
+  jenis: string
   buktiDocUrl?: string | null
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { siswaService } from '@/services/siswaService'
@@ -20,12 +20,16 @@ const isSubmitting = ref(false)
 const formJanjiTemu = ref<JanjiTemuCreateRequest>({
   siswaId: null,
   guruId: null,
+  tanggal: '',
+  waktu: '',
   keperluan: '',
 })
 
 const errors = ref({
   siswaId: '',
   guruId: '',
+  tanggal: '',
+  waktu: '',
   keperluan: '',
 })
 
@@ -46,6 +50,8 @@ const validateForm = () => {
   errors.value = {
     siswaId: '',
     guruId: '',
+    tanggal: '',
+    waktu: '',
     keperluan: '',
   }
 
@@ -61,23 +67,67 @@ const validateForm = () => {
     isValid = false
   }
 
+  if (!formJanjiTemu.value.tanggal) {
+    errors.value.tanggal = 'Tanggal wajib diisi'
+    isValid = false
+  }
+
+  if (!formJanjiTemu.value.waktu) {
+    errors.value.waktu = 'Waktu wajib diisi'
+    isValid = false
+  }
+
   if (!formJanjiTemu.value.keperluan.trim()) {
     errors.value.keperluan = 'Keperluan wajib diisi'
     isValid = false
   }
 
+  if (formJanjiTemu.value.tanggal && formJanjiTemu.value.waktu) {
+    const selectedDateTime = new Date(`${formJanjiTemu.value.tanggal}T${formJanjiTemu.value.waktu}`)
+    if (selectedDateTime < new Date()) {
+      errors.value.tanggal = 'Tanggal dan waktu janji temu tidak boleh di masa lalu.'
+      errors.value.waktu = 'Tanggal dan waktu janji temu tidak boleh di masa lalu.'
+      isValid = false
+    }
+  }
+
   return isValid
 }
+
+const isFormValid = computed(() => {
+  if (!formJanjiTemu.value.siswaId || !formJanjiTemu.value.guruId || !formJanjiTemu.value.tanggal || !formJanjiTemu.value.waktu || !formJanjiTemu.value.keperluan.trim()) {
+    return false
+  }
+  const selectedDateTime = new Date(`${formJanjiTemu.value.tanggal}T${formJanjiTemu.value.waktu}`)
+  return selectedDateTime >= new Date()
+})
+
+watch([() => formJanjiTemu.value.tanggal, () => formJanjiTemu.value.waktu], () => {
+  if (formJanjiTemu.value.tanggal && formJanjiTemu.value.waktu) {
+    const selectedDateTime = new Date(`${formJanjiTemu.value.tanggal}T${formJanjiTemu.value.waktu}`)
+    if (selectedDateTime < new Date()) {
+      errors.value.tanggal = 'Tanggal dan waktu janji temu tidak boleh di masa lalu.'
+      errors.value.waktu = 'Tanggal dan waktu janji temu tidak boleh di masa lalu.'
+    } else {
+      errors.value.tanggal = ''
+      errors.value.waktu = ''
+    }
+  }
+})
 
 const resetForm = () => {
   formJanjiTemu.value = {
     siswaId: null,
     guruId: null,
+    tanggal: '',
+    waktu: '',
     keperluan: '',
   }
   errors.value = {
     siswaId: '',
     guruId: '',
+    tanggal: '',
+    waktu: '',
     keperluan: '',
   }
 }
@@ -93,6 +143,8 @@ const handleSubmit = async () => {
     await janjiTemuService.create({
       siswaId: formJanjiTemu.value.siswaId,
       guruId: formJanjiTemu.value.guruId,
+      tanggal: formJanjiTemu.value.tanggal,
+      waktu: formJanjiTemu.value.waktu,
       keperluan: formJanjiTemu.value.keperluan.trim(),
     })
 
@@ -153,6 +205,32 @@ onMounted(fetchFormOptions)
           <p v-if="errors.guruId" class="text-sm text-red-500">{{ errors.guruId }}</p>
         </div>
 
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Tanggal</label>
+            <input
+              type="date"
+              v-model="formJanjiTemu.tanggal"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+              :disabled="isSubmitting"
+              required
+            />
+            <p v-if="errors.tanggal" class="text-sm text-red-500">{{ errors.tanggal }}</p>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Waktu</label>
+            <input
+              type="time"
+              v-model="formJanjiTemu.waktu"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+              :disabled="isSubmitting"
+              required
+            />
+            <p v-if="errors.waktu" class="text-sm text-red-500">{{ errors.waktu }}</p>
+          </div>
+        </div>
+
         <div class="space-y-1">
           <label class="text-xs font-bold text-gray-400 uppercase ml-1">Keperluan Pertemuan</label>
           <textarea
@@ -177,7 +255,7 @@ onMounted(fetchFormOptions)
           </button>
           <button
             type="submit"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || !isFormValid"
             class="flex-1 py-3 bg-[#1A2342] text-white rounded-xl font-bold hover:bg-slate-800 shadow-xl transition-all disabled:opacity-50"
           >
             {{ isSubmitting ? 'Menyimpan...' : 'Simpan Janji Temu' }}

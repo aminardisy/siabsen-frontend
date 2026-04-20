@@ -15,6 +15,12 @@ export const updateDispensasi = async (id: number, payload: UpdateDispensasiPayl
   return res.data.data
 }
 
+// Update status dispensasi
+export const updateStatusDispensasi = async (id: number, status: string): Promise<Dispensasi> => {
+  const res = await api.patch(`/dispensasi/${id}/status`, { status })
+  return res.data.data
+}
+
 // Ambil semua dispensasi
 export const getAllDispensasi = async (): Promise<Dispensasi[]> => {
   const res = await api.get('/dispensasi')

@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Dispensasi, CreateDispensasiPayload, UpdateDispensasiPayload } from '@/models/dispensasi'
 import * as dispensasiService from '@/services/dispensasiService'
+import { updateStatusDispensasi } from '@/services/dispensasiService'
 
 export const useDispensasiStore = defineStore('dispensasi', () => {
   const dispensasiList = ref<Dispensasi[]>([])
@@ -66,6 +67,23 @@ export const useDispensasiStore = defineStore('dispensasi', () => {
     }
   }
 
+  // Tambah method ini di dalam store
+  const updateStatus = async (id: number, status: string): Promise<void> => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const updated = await updateStatusDispensasi(id, status)
+      const idx = dispensasiList.value.findIndex(d => d.id === id)
+      if (idx !== -1) dispensasiList.value[idx] = updated
+      await fetchToday()
+    } catch (e: any) {
+      error.value = e.response?.data?.message || 'Gagal mengupdate status'
+      throw e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     dispensasiList,
     izinAktifHariIni,
@@ -75,5 +93,6 @@ export const useDispensasiStore = defineStore('dispensasi', () => {
     fetchToday,
     create,
     update,
+    updateStatus,
   }
 })

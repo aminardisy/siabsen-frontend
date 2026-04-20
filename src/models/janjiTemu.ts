@@ -1,12 +1,16 @@
 export interface JanjiTemuCreateRequest {
   siswaId: number | null
   guruId: number | null
+  tanggal: string
+  waktu: string
   keperluan: string
 }
 
 export interface JanjiTemuUpdateRequest {
   siswaId: number | null
   guruId: number | null
+  tanggal: string
+  waktu: string
   keperluan: string
 }
 
