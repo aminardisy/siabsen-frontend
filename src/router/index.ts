@@ -75,6 +75,12 @@ const router = createRouter({
       name: 'about',
       component: () => import('../views/AboutView.vue'),
     },
+    {
+      path: '/dispensasi',
+      name: 'dispensasi',
+      component: () => import('@/views/DispensasiView.vue'),
+      meta: { requiresAuth: true }
+    },
   ],
 })
 
