@@ -161,7 +161,7 @@
               <h2 class="font-bold text-[#1A2342]">Riwayat Dispensasi</h2>
               <span class="text-xs text-gray-400">{{ dispensasiStore.dispensasiList?.length || 0 }} data</span>
             </div>
-            
+
             <div class="flex flex-wrap items-end gap-3 bg-white p-3 rounded-xl border border-slate-200">
               <div class="flex-1 min-w-[150px]">
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Filter Siswa</label>
@@ -498,7 +498,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useDispensasiStore } from '@/stores/dispensasi'
 import { siswaService } from '@/services/siswaService'
-import api from '@/services/api' 
+import api from '@/services/api'
 import type { Dispensasi } from '@/models/dispensasi'
 import type { SiswaResponse } from '@/models/siswa'
 
@@ -589,7 +589,7 @@ const fetchRiwayat = async () => {
   try {
     const params: any = { startDate: filterStartDate.value, endDate: filterEndDate.value }
     if (filterSiswaId.value) params.siswaId = filterSiswaId.value
-    
+
     const res = await api.get('/dispensasi', { params })
     riwayatData.value = res.data.data || []
   } catch (error) {
@@ -668,7 +668,7 @@ const submitCreate = async () => {
     showPreviewModal.value = false
     showToast('Dispensasi berhasil diajukan!', 'success')
     resetForm()
-    
+
     fetchRiwayat()
     dispensasiStore.fetchToday()
   } catch (e: any) {
@@ -710,23 +710,12 @@ const submitEdit = async () => {
     })
     showEditModal.value = false
     showToast('Dispensasi berhasil diperbarui!', 'success')
-    
+
     // Refresh
     fetchRiwayat()
     dispensasiStore.fetchToday()
   } catch (e: any) {
     editError.value = e.response?.data?.message || 'Gagal mengupdate data'
-  }
-}
-
-// Update status dispensasi
-const handleUpdateStatus = async (id: number, status: string) => {
-  if (!status) return
-  try {
-    await dispensasiStore.updateStatus(id, status)
-    showToast(`Status berhasil diubah ke ${status}`, 'success')
-  } catch (e: any) {
-    showToast(e.response?.data?.message || 'Gagal mengubah status', 'error')
   }
 }
 
@@ -772,7 +761,7 @@ const showToast = (message: string, type: 'success' | 'error') => {
 // ── Lifecycle ──
 onMounted(() => {
   fetchSiswa()
-  fetchRiwayat() 
-  dispensasiStore.fetchToday() 
+  fetchRiwayat()
+  dispensasiStore.fetchToday()
 })
 </script>
