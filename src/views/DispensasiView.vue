@@ -158,7 +158,7 @@
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
           <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-[#1A2342]">Riwayat Dispensasi</h2>
+              <h2 class="font-bold text-[#1A2342]">Riwayat Izin & Dispensasi</h2>
               <span class="text-xs text-gray-400">{{ dispensasiStore.dispensasiList?.length || 0 }} data</span>
             </div>
 
