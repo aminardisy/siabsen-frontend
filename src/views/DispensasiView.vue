@@ -728,7 +728,6 @@ const handleUpdateStatus = async (id: number, status: string) => {
   }
 }
 
-// Helpers
 
 
 // ── Helpers Visual ──
@@ -757,9 +756,18 @@ const showToast = (message: string, type: 'success' | 'error') => {
 }
 
 // ── Lifecycle ──
-onMounted(() => {
-  fetchSiswa()
-  fetchRiwayat()
-  dispensasiStore.fetchToday()
+onMounted(async () => {
+  isLoadingRiwayat.value = true
+  try {
+    await Promise.all([
+      fetchSiswa(),
+      dispensasiStore.fetchAll(),
+      fetchRiwayat()
+    ])
+  } catch (error) {
+    console.error("Initialization error:", error)
+  } finally {
+    isLoadingRiwayat.value = false
+  }
 })
 </script>
