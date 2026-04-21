@@ -4,8 +4,16 @@ import type {
   JanjiTemuDetailResponse,
   JanjiTemuListItemResponse,
   JanjiTemuResponse,
+  JanjiTemuStatusUpdateRequest,
   JanjiTemuUpdateRequest,
 } from '@/models/janjiTemu'
+
+interface ApiResponse<T> {
+  success: boolean
+  message: string
+  data: T
+  errors?: Record<string, string>
+}
 
 const extractPayload = <T>(responseData: any): T => {
   if (responseData?.data !== undefined) {
@@ -34,6 +42,14 @@ export const janjiTemuService = {
   update: async (id: number, data: JanjiTemuUpdateRequest): Promise<JanjiTemuResponse> => {
     const response = await api.put(`/janji-temu/${id}`, data)
     return extractPayload<JanjiTemuResponse>(response.data)
+  },
+
+  updateStatus: async (
+    id: number,
+    data: JanjiTemuStatusUpdateRequest,
+  ): Promise<ApiResponse<JanjiTemuResponse>> => {
+    const response = await api.put(`/janji-temu/${id}/status`, data)
+    return response.data as ApiResponse<JanjiTemuResponse>
   },
 
   delete: async (id: number): Promise<void> => {

@@ -281,29 +281,39 @@
         </div>
 
         <!-- Izin Aktif Hari Ini -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex-1">
-          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Izin Aktif Hari ini</h3>
+       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex-1 min-h-[300px]">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+          Izin Aktif: {{ formatDate(selectedDate) }}
+        </h3>
 
-          <div v-if="dispensasiStore.izinAktifHariIni.length === 0" class="py-8 text-center text-gray-400 text-sm">
-            Belum ada izin aktif hari ini
-          </div>
+        <div v-if="izinAktifSesuaiTanggal.length === 0" class="py-12 text-center text-gray-400 text-sm">
+          <div class="mb-2">📅</div>
+          Tidak ada izin/dispensasi aktif<br>pada tanggal ini.
+        </div>
 
-          <div class="space-y-3">
-            <div
-              v-for="item in dispensasiStore.izinAktifHariIni"
-              :key="item.id"
-              class="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-b-0"
-            >
-              <div>
-                <p class="text-sm font-semibold text-slate-700">{{ item.siswaNama }}</p>
-                <p class="text-xs text-gray-400">{{ item.siswaNisn }}</p>
-              </div>
-              <span :class="jenisBadgeClass(item.statusApproval)" class="text-[11px] font-bold px-2.5 py-1 rounded-full">
-                {{ jenisLabel(item.statusApproval) }}
-              </span>
+        <div class="space-y-3">
+          <div
+            v-for="item in izinAktifSesuaiTanggal"
+            :key="item.id"
+            class="flex items-center justify-between py-3 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 transition-colors px-2 rounded-lg"
+          >
+            <div>
+              <p class="text-sm font-bold text-[#1A2342]">{{ item.siswaNama }}</p>
+              <p class="text-[10px] text-gray-400 font-mono">{{ item.siswaNisn }} · {{ item.jenis }}</p>
             </div>
+            <span
+              :class="{
+                'bg-blue-100 text-blue-600': item.jenis === 'DISPENSASI',
+                'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
+                'bg-green-100 text-green-600': item.jenis === 'IZIN',
+              }"
+              class="text-[10px] font-black px-2 py-1 rounded-md uppercase"
+            >
+              {{ jenisLabel(item.jenis) }}
+            </span>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -457,7 +467,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useDispensasiStore } from '@/stores/dispensasi'
 import { siswaService } from '@/services/siswaService'
 import type { Dispensasi } from '@/models/dispensasi'
@@ -548,7 +558,33 @@ const pilihSiswa = (siswa: SiswaResponse) => {
 
 const pilihHari = (day: number) => {
   hariDipilih.value = day
+  const d = new Date(tahunKalender.value, bulanKalender.value, day)
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset()) // Sync timezone
+  selectedDate.value = d.toISOString().slice(0, 10)
 }
+
+watch(selectedDate, (newDate) => {
+  if (!newDate) return
+  const d = new Date(newDate)
+  hariDipilih.value = d.getDate()
+  bulanKalender.value = d.getMonth()
+  tahunKalender.value = d.getFullYear()
+})
+
+const izinAktifSesuaiTanggal = computed(() => {
+  const target = selectedDate.value // Format: YYYY-MM-DD
+  if (!target) return []
+
+  return dispensasiStore.dispensasiList.filter(item => {
+    // Hanya tampilkan yang sudah disetujui (Approved)
+    // Dan tanggal yang dipilih berada di dalam rentang izin
+    return (
+      item.statusApproval === 'APPROVED' &&
+      target >= item.tanggalMulai &&
+      target <= item.tanggalSelesai
+    )
+  })
+})
 
 const prevMonth = () => {
   if (bulanKalender.value === 0) { bulanKalender.value = 11; tahunKalender.value-- }
