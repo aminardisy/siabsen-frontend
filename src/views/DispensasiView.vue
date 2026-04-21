@@ -158,7 +158,7 @@
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
           <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-[#1A2342]">Riwayat Dispensasi</h2>
+              <h2 class="font-bold text-[#1A2342]">Riwayat Izin & Dispensasi</h2>
               <span class="text-xs text-gray-400">{{ dispensasiStore.dispensasiList?.length || 0 }} data</span>
             </div>
 
@@ -193,8 +193,8 @@
               <tr>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Siswa</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Periode</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Jenis</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Alasan</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Alasan</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Jenis</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Status</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
               </tr>
@@ -220,7 +220,6 @@
                   </div>
                   <p class="text-xs text-slate-500 truncate" :title="item.alasan">{{ item.alasan }}</p>
                 </td>
-                <!-- Tambah ini -->
                 <td class="px-6 py-4 text-center">
                   <span
                     :class="{
@@ -646,7 +645,6 @@ const nextMonth = () => {
   else bulanKalender.value++
 }
 
-// ATD-07: Validasi lalu buka preview modal
 const openPreviewModal = () => {
   formError.value = ''
   if (!selectedSiswa.value) { formError.value = 'Pilih siswa terlebih dahulu.'; return }
@@ -730,7 +728,6 @@ const handleUpdateStatus = async (id: number, status: string) => {
   }
 }
 
-// Helpers
 
 
 // ── Helpers Visual ──
@@ -759,9 +756,18 @@ const showToast = (message: string, type: 'success' | 'error') => {
 }
 
 // ── Lifecycle ──
-onMounted(() => {
-  fetchSiswa()
-  fetchRiwayat()
-  dispensasiStore.fetchToday()
+onMounted(async () => {
+  isLoadingRiwayat.value = true
+  try {
+    await Promise.all([
+      fetchSiswa(),
+      dispensasiStore.fetchAll(),
+      fetchRiwayat()
+    ])
+  } catch (error) {
+    console.error("Initialization error:", error)
+  } finally {
+    isLoadingRiwayat.value = false
+  }
 })
 </script>
