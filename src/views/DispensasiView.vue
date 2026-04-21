@@ -155,43 +155,70 @@
         </div>
 
         <!-- Tabel Riwayat Dispensasi -->
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-          <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 class="font-bold text-[#1A2342]">Riwayat Dispensasi</h2>
-            <span class="text-xs text-gray-400">{{ dispensasiStore.dispensasiList.length }} data</span>
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+          <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-bold text-[#1A2342]">Riwayat Dispensasi</h2>
+              <span class="text-xs text-gray-400">{{ dispensasiStore.dispensasiList?.length || 0 }} data</span>
+            </div>
+            
+            <div class="flex flex-wrap items-end gap-3 bg-white p-3 rounded-xl border border-slate-200">
+              <div class="flex-1 min-w-[150px]">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Filter Siswa</label>
+                <select v-model="filterSiswaId" class="w-full text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]">
+                  <option :value="null">Semua Siswa</option>
+                  <option v-for="s in allSiswa" :key="s.id" :value="s.id">{{ s.nama }} - {{ s.namaKelas }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dari</label>
+                <input type="date" v-model="filterStartDate" class="text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Sampai</label>
+                <input type="date" v-model="filterEndDate" class="text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]" />
+              </div>
+              <button @click="fetchRiwayat" class="bg-[#1A2342] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 transition shadow-sm h-[38px]">
+                Filter
+              </button>
+            </div>
           </div>
 
-          <div v-if="dispensasiStore.isLoading" class="p-12 text-center text-gray-400 text-sm animate-pulse">
+          <div v-if="isLoadingRiwayat" class="p-12 text-center text-gray-400 text-sm animate-pulse">
             Memuat data...
           </div>
 
           <table v-else class="w-full text-left">
             <thead class="bg-[#1A2342] text-white">
               <tr>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">No</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Siswa</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Periode</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Jenis</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Alasan</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Status</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-if="dispensasiStore.dispensasiList.length === 0">
-                <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm">Belum ada data dispensasi</td>
+              <tr v-if="riwayatData.length === 0">
+                <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-sm">Tidak ada data dispensasi pada periode ini</td>
               </tr>
-              <tr
-                v-for="(item, index) in dispensasiStore.dispensasiList"
-                :key="item.id"
-                class="hover:bg-slate-50/80 transition-colors"
-              >
-                <td class="px-6 py-4 text-sm text-gray-400 font-mono">{{ index + 1 }}</td>
+              <tr v-for="item in riwayatData" :key="item.id" class="hover:bg-slate-50/80 transition-colors">
                 <td class="px-6 py-4">
                   <p class="font-semibold text-slate-700 text-sm">{{ item.siswaNama }}</p>
                   <p class="text-xs text-gray-400 font-mono">{{ item.siswaNisn }}</p>
                 </td>
-                <td class="px-6 py-4 text-sm text-slate-600">
-                  {{ formatDate(item.tanggalMulai) }} – {{ formatDate(item.tanggalSelesai) }}
+                <td class="px-6 py-4 text-sm text-slate-600 font-medium">
+                  {{ formatDate(item.tanggalMulai) }} <br><span class="text-gray-400 text-xs font-normal">s/d</span> <br> {{ formatDate(item.tanggalSelesai) }}
+                </td>
+                <td class="px-6 py-4 max-w-[200px]">
+                  <div v-if="item.buktiDocUrl" class="mb-1">
+                    <a :href="item.buktiDocUrl" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-0.5 rounded transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" /></svg>
+                      Dokumen
+                    </a>
+                  </div>
+                  <p class="text-xs text-slate-500 truncate" :title="item.alasan">{{ item.alasan }}</p>
                 </td>
                 <!-- Tambah ini -->
                 <td class="px-6 py-4 text-center">
@@ -206,8 +233,9 @@
                     {{ { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[item.jenis] || '-' }}
                   </span>
                 </td>
+
                 <td class="px-6 py-4 text-center">
-                  <span :class="badgeClass(item.statusApproval)" class="px-3 py-1 rounded-full text-[11px] font-bold">
+                  <span :class="badgeClass(item.statusApproval)" class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border">
                     {{ item.statusApproval }}
                   </span>
                 </td>
@@ -250,7 +278,7 @@
               </tr>
             </tbody>
           </table>
-        </div>
+      </div>
       </div>
 
       <!-- ── RIGHT: Kalender + Izin Aktif ── -->
@@ -470,43 +498,51 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useDispensasiStore } from '@/stores/dispensasi'
 import { siswaService } from '@/services/siswaService'
+import api from '@/services/api' 
 import type { Dispensasi } from '@/models/dispensasi'
 import type { SiswaResponse } from '@/models/siswa'
 
 const dispensasiStore = useDispensasiStore()
 
-// ── State ──
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
-const searchQuery = ref('')
+// ── State Data Master ──
 const allSiswa = ref<SiswaResponse[]>([])
 const selectedSiswa = ref<SiswaResponse | null>(null)
+const searchQuery = ref('')
+const selectedDate = ref(new Date().toISOString().slice(0, 10))
 
+// ── State Riwayat Table (ATD-08) ──
+const today = new Date().toISOString().slice(0, 10)
+const filterStartDate = ref(today)
+const filterEndDate = ref(today)
+const filterSiswaId = ref<number | null>(null)
+const riwayatData = ref<Dispensasi[]>([])
+const isLoadingRiwayat = ref(false)
+
+// ── State Form Create ──
 const form = ref({
-  type: 'IZIN' as 'DISPENSASI' | 'SAKIT' | 'IZIN',
-  tanggalMulai: new Date().toISOString().slice(0, 10),
-  tanggalSelesai: new Date().toISOString().slice(0, 10),
+  type: 'IZIN' as 'DISPENSASI' | 'SAKIT' | 'IZIN', // Disimpan agar UI tidak error
+  tanggalMulai: today,
+  tanggalSelesai: today,
   alasan: '',
   buktiDocUrl: ''
 })
-
 const formError = ref('')
 const showPreviewModal = ref(false)
 
-// Edit modal (ATD-09)
+// ── State Form Edit (ATD-09) ──
 const showEditModal = ref(false)
 const editTarget = ref<Dispensasi | null>(null)
 const editForm = ref({ tanggalMulai: '', tanggalSelesai: '', alasan: '', buktiDocUrl: '' })
 const editError = ref('')
 
-// Toast
 const toast = ref({ show: false, message: '', type: 'success' })
 
-// Kalender
+// ── State Kalender ──
 const now = new Date()
 const bulanKalender = ref(now.getMonth())
 const tahunKalender = ref(now.getFullYear())
-const hariDipilih = ref(now.getDate())
 const hariIni = now.getDate()
+const hariDipilih = ref(now.getDate())
 const bulanIni = now.getMonth()
 const tahunIni = now.getFullYear()
 const hariSingkat = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
@@ -526,9 +562,7 @@ const filteredSiswa = computed(() => {
   )
 })
 
-const namabulan = computed(() =>
-  new Date(tahunKalender.value, bulanKalender.value).toLocaleString('id-ID', { month: 'long' })
-)
+const namabulan = computed(() => new Date(tahunKalender.value, bulanKalender.value).toLocaleString('id-ID', { month: 'long' }))
 
 const hariKalender = computed(() => {
   const firstDay = new Date(tahunKalender.value, bulanKalender.value, 1).getDay()
@@ -539,17 +573,33 @@ const hariKalender = computed(() => {
   return days
 })
 
-// ── Methods ──
+// ── Methods Fetching ──
 const fetchSiswa = async () => {
   try {
     const res = await siswaService.getAll()
-    // getAll() dari siswaService return response.data langsung (array)
     allSiswa.value = Array.isArray(res) ? res : (res as any).data || []
   } catch {
     allSiswa.value = []
   }
 }
 
+// ATD-08 Fetch Data berdasarkan filter params
+const fetchRiwayat = async () => {
+  isLoadingRiwayat.value = true
+  try {
+    const params: any = { startDate: filterStartDate.value, endDate: filterEndDate.value }
+    if (filterSiswaId.value) params.siswaId = filterSiswaId.value
+    
+    const res = await api.get('/dispensasi', { params })
+    riwayatData.value = res.data.data || []
+  } catch (error) {
+    console.error('Gagal mengambil riwayat', error)
+  } finally {
+    isLoadingRiwayat.value = false
+  }
+}
+
+// ── Methods Form & Actions ──
 const pilihSiswa = (siswa: SiswaResponse) => {
   selectedSiswa.value = siswa
   searchQuery.value = ''
@@ -600,13 +650,11 @@ const nextMonth = () => {
 const openPreviewModal = () => {
   formError.value = ''
   if (!selectedSiswa.value) { formError.value = 'Pilih siswa terlebih dahulu.'; return }
-  if (!form.value.tanggalMulai) { formError.value = 'Tanggal mulai wajib diisi.'; return }
-  if (!form.value.tanggalSelesai) { formError.value = 'Tanggal selesai wajib diisi.'; return }
+  if (!form.value.tanggalMulai || !form.value.tanggalSelesai) { formError.value = 'Tanggal wajib diisi.'; return }
   if (!form.value.alasan.trim()) { formError.value = 'Alasan wajib diisi.'; return }
   showPreviewModal.value = true
 }
 
-// ATD-07: Submit create
 const submitCreate = async () => {
   try {
     await dispensasiStore.create({
@@ -618,8 +666,11 @@ const submitCreate = async () => {
       buktiDocUrl: form.value.buktiDocUrl || null
     })
     showPreviewModal.value = false
-    showToast('Dispensasi berhasil disimpan!', 'success')
+    showToast('Dispensasi berhasil diajukan!', 'success')
     resetForm()
+    
+    fetchRiwayat()
+    dispensasiStore.fetchToday()
   } catch (e: any) {
     showPreviewModal.value = false
     showToast(e.response?.data?.message || 'Gagal menyimpan dispensasi', 'error')
@@ -629,16 +680,9 @@ const submitCreate = async () => {
 const resetForm = () => {
   selectedSiswa.value = null
   searchQuery.value = ''
-  form.value = {
-    type: 'IZIN',
-    tanggalMulai: new Date().toISOString().slice(0, 10),
-    tanggalSelesai: new Date().toISOString().slice(0, 10),
-    alasan: '',
-    buktiDocUrl: ''
-  }
+  form.value = { type: 'IZIN', tanggalMulai: today, tanggalSelesai: today, alasan: '', buktiDocUrl: '' }
 }
 
-// ATD-09: Buka edit modal
 const openEditModal = (item: Dispensasi) => {
   editTarget.value = item
   editForm.value = {
@@ -651,11 +695,10 @@ const openEditModal = (item: Dispensasi) => {
   showEditModal.value = true
 }
 
-// ATD-09: Submit update
 const submitEdit = async () => {
   editError.value = ''
   if (!editForm.value.tanggalMulai || !editForm.value.tanggalSelesai || !editForm.value.alasan.trim()) {
-    editError.value = 'Tanggal mulai, tanggal selesai, dan alasan wajib diisi.'
+    editError.value = 'Semua field dengan bintang merah wajib diisi.'
     return
   }
   try {
@@ -666,9 +709,24 @@ const submitEdit = async () => {
       buktiDocUrl: editForm.value.buktiDocUrl || null,
     })
     showEditModal.value = false
-    showToast('Dispensasi berhasil diupdate!', 'success')
+    showToast('Dispensasi berhasil diperbarui!', 'success')
+    
+    // Refresh
+    fetchRiwayat()
+    dispensasiStore.fetchToday()
   } catch (e: any) {
-    editError.value = e.response?.data?.message || 'Gagal mengupdate dispensasi'
+    editError.value = e.response?.data?.message || 'Gagal mengupdate data'
+  }
+}
+
+// Update status dispensasi
+const handleUpdateStatus = async (id: number, status: string) => {
+  if (!status) return
+  try {
+    await dispensasiStore.updateStatus(id, status)
+    showToast(`Status berhasil diubah ke ${status}`, 'success')
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Gagal mengubah status', 'error')
   }
 }
 
@@ -684,6 +742,9 @@ const handleUpdateStatus = async (id: number, status: string) => {
 }
 
 // Helpers
+
+
+// ── Helpers Visual ──
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -691,38 +752,27 @@ const formatDate = (dateStr: string) => {
 
 const badgeClass = (status: string) => {
   const map: Record<string, string> = {
-    PENDING:  'bg-yellow-100 text-yellow-700',
-    APPROVED: 'bg-green-100 text-green-700',
-    REJECTED: 'bg-red-100 text-red-600',
-    CLOSED:   'bg-slate-100 text-slate-400',
+    PENDING:  'text-yellow-600 border-yellow-200 bg-yellow-50',
+    APPROVED: 'text-green-600 border-green-200 bg-green-50',
+    REJECTED: 'text-red-600 border-red-200 bg-red-50',
+    CLOSED:   'text-slate-500 border-slate-200 bg-slate-50',
   }
-  return map[status] || 'bg-slate-100 text-slate-400'
+  return map[status] || 'text-slate-500 border-slate-200'
 }
 
-const jenisBadgeClass = (status: string) => {
-  const map: Record<string, string> = {
-    DISPENSASI: 'bg-blue-100 text-blue-600',
-    SAKIT:      'bg-yellow-100 text-yellow-600',
-    IZIN:       'bg-green-100 text-green-600',
-  }
-  return map[status] || 'bg-slate-100 text-slate-400'
-}
-
-const jenisLabel = (status: string) => {
-  return { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[status] || status
-}
+// Karena 'jenis' sudah dihilangkan dari model, kita mapping fallback statusApproval agar template tidak crash
+const jenisBadgeClass = (status: string) => badgeClass(status)
+const jenisLabel = (status: string) => status
 
 const showToast = (message: string, type: 'success' | 'error') => {
   toast.value = { show: true, message, type }
-  setTimeout(() => { toast.value.show = false }, 3000)
+  setTimeout(() => { toast.value.show = false }, 3500)
 }
 
 // ── Lifecycle ──
-onMounted(async () => {
-  await Promise.all([
-    fetchSiswa(),
-    dispensasiStore.fetchAll(),
-    dispensasiStore.fetchToday()
-  ])
+onMounted(() => {
+  fetchSiswa()
+  fetchRiwayat() 
+  dispensasiStore.fetchToday() 
 })
 </script>

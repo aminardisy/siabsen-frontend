@@ -46,8 +46,8 @@ const formatWaktu = (waktu: string) => {
 
 const statusLabelMap: Record<JanjiTemuStatus, string> = {
   WAITING: 'Menunggu',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
+  // APPROVED: 'Disetujui',
+  // REJECTED: 'Ditolak',
   FINISHED: 'Selesai',
 }
 

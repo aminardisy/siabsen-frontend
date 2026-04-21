@@ -51,6 +51,8 @@
         </template>
       </SidebarItem>
 
+     
+
       <SidebarItem
         v-if="['GURU', 'SEKRETARIS'].includes(authStore.user?.role)"
         to="/janji-temu"
@@ -66,6 +68,41 @@
       </SidebarItem>
 
 
+
+      <template v-if="authStore.user?.role === 'GURU'">
+        <div class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest" v-if="!uiStore.isSidebarCollapsed">
+          Sistem
+        </div>
+
+        <SidebarItem
+          to="/catat-keterlambatan"
+          label="Keterlambatan"
+          :active="route.path.startsWith('/catat-keterlambatan')"
+          :isCollapsed="uiStore.isSidebarCollapsed"
+        >
+          <template #icon>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+            </svg>
+          </template>
+        </SidebarItem>
+
+        <SidebarItem
+        v-if="['ADMIN', 'KESISWAAN', 'GURU'].includes(authStore.user?.role)"
+        to="/laporan-keterlambatan"
+        label="Laporan Keterlambatan"
+        :active="route.path.startsWith('/laporan-keterlambatan')"
+        :isCollapsed="uiStore.isSidebarCollapsed"
+      >
+        <template #icon>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </template>
+      </SidebarItem>
+
+      
+      </template>
 
       <template v-if="['ADMIN', 'PIKET', 'GURU'].includes(authStore.user?.role)">
         <div class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest" v-if="!uiStore.isSidebarCollapsed">
@@ -133,7 +170,7 @@
           </template>
         </SidebarItem>
 
-        <SidebarItem
+        <!-- <SidebarItem
           v-if="authStore.user?.role === 'GURU'"
           to="/rekap-siswa"
           label="Laporan & Rekap"
@@ -146,7 +183,23 @@
                 d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </template>
+        </SidebarItem> -->
+
+         
+        <SidebarItem
+          v-if="['GURU', 'KESISWAAN'].includes(authStore.user?.role)"
+          to="/rekap"
+          label="Rekap Absensi"
+          :active="route.path.startsWith('/rekap')"
+          :isCollapsed="uiStore.isSidebarCollapsed"
+        >
+          <template #icon>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </template>
         </SidebarItem>
+
 
         <SidebarItem
           v-if="['ADMIN', 'PIKET'].includes(authStore.user?.role)"
