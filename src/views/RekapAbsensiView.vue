@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue' 
 import { absensiService, type RekapDashboardResponse } from '@/services/absensiService'
 import { kelasService } from '@/services/kelasService'
 import { siswaService } from '@/services/siswaService'
 import StudentAttendanceCalendar from '@/components/StudentAttendanceCalendar.vue'
 import { Pie } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import ChartDataLabels from 'chartjs-plugin-datalabels' // <-- IMPORT PLUGIN BARU
+import ChartDataLabels from 'chartjs-plugin-datalabels'
 
-// Register plugin datalabels
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels)
 
 // --- State UI & Dropdown Mentah ---
@@ -29,17 +28,55 @@ const selectedTargetId = ref<number | null>(null)
 const calendarMonth = ref(new Date().getMonth())
 const calendarYear = ref(new Date().getFullYear())
 
-// --- Logic Academic Year ---
+// --- NEW: State untuk Memerintahkan Kalender Melompat ---
+const targetCalendarMonth = ref(new Date().getMonth())
+const targetCalendarYear = ref(new Date().getFullYear())
+
+// --- State Filter Akademik ---
+const currentYearStr = new Date().getFullYear()
+const currentMonthIdx = new Date().getMonth()
+const defaultStartYear = currentMonthIdx >= 7 ? currentYearStr : currentYearStr - 1
+
+const filterAcademicYear = ref(defaultStartYear)
+const filterTerm = ref<'GANJIL' | 'GENAP' | 'FULL'>('FULL')
+
+// Generate list tahun ajaran dinamis
+const academicYearOptions = computed(() => {
+  const opts = []
+  for (let i = currentYearStr - 2; i <= currentYearStr + 1; i++) {
+    opts.push({ value: i, label: `${i}/${i + 1}` })
+  }
+  return opts
+})
+
+// --- Logic Bounds ---
 const getAcademicYearBounds = () => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth() // 0 = Jan, 6 = Jul
-  const startYear = month >= 6 ? year : year - 1
-  return {
-    startDate: `${startYear}-07-01`,
-    endDate: `${startYear + 1}-06-30`
+  const y = filterAcademicYear.value
+  if (filterTerm.value === 'GANJIL') {
+    return { startDate: `${y}-08-01`, endDate: `${y}-12-31` }
+  } else if (filterTerm.value === 'GENAP') {
+    return { startDate: `${y + 1}-01-01`, endDate: `${y + 1}-06-30` }
+  } else {
+    return { startDate: `${y}-08-01`, endDate: `${y + 1}-06-30` }
   }
 }
+
+// Pantau perubahan filter dropdown
+watch([filterAcademicYear, filterTerm], () => {
+  // 1. Kalkulasi loncatan Kalender
+  if (filterTerm.value === 'GENAP') {
+    targetCalendarMonth.value = 0 // 0 = Januari
+    targetCalendarYear.value = filterAcademicYear.value + 1
+  } else {
+    targetCalendarMonth.value = 7 // 7 = Agustus (berlaku untuk Ganjil & Full)
+    targetCalendarYear.value = filterAcademicYear.value
+  }
+
+  // 2. Fetch data API
+  if (selectedTargetId.value) {
+    loadDashboardData(selectedTargetId.value, rekapMode.value)
+  }
+})
 
 // --- Fetching Logic ---
 const fetchDropdownData = async () => {
@@ -98,10 +135,8 @@ const displayStats = computed(() => {
       dispen: dashboardData.value.totalDispensasi || 0
     }
   } else {
-    // Mode MONTHLY: Hitung on the fly berdasarkan bulan kalender
     const targetMonthString = `${calendarYear.value}-${String(calendarMonth.value + 1).padStart(2, '0')}`
     
-    // Safely filter records.
     const monthlyRecords = (dashboardData.value.records || []).filter(r => {
       if (!r || !r.tanggal) return false;
       return r.tanggal.startsWith(targetMonthString);
@@ -131,11 +166,11 @@ const chartData = computed(() => {
           displayStats.value.dispen
         ],
         backgroundColor: [
-          '#90be6d', // Hadir (Green)
-          '#f9c74f', // Izin (Yellow)
-          '#f94144', // Sakit (Red)
-          '#e5e7eb', // Alfa (Ice Gray)
-          '#577590', // Dispensasi (Grey-blue)
+          '#90be6d', // Hadir
+          '#f9c74f', // Izin
+          '#f94144', // Sakit
+          '#e5e7eb', // Alfa
+          '#577590', // Dispensasi
         ],
         borderWidth: 0
       }
@@ -148,10 +183,8 @@ const chartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    // Konfigurasi Label Persentase
     datalabels: {
       color: (context: any) => {
-        // Karena Alfa warnanya Ice Gray sangat terang, kita buat teksnya gelap agar terbaca
         return context.dataIndex === 3 ? '#475569' : '#ffffff';
       },
       font: {
@@ -159,7 +192,6 @@ const chartOptions = {
         size: 16
       },
       formatter: (value: number, context: any) => {
-        // Jangan tampilkan tulisan "0%" jika tidak ada data
         if (value === 0) return null;
         
         const dataArr = context.chart.data.datasets[0].data;
@@ -172,7 +204,6 @@ const chartOptions = {
   }
 }
 
-// Menerima data dari kalender
 const handleMonthChange = (val: { month: number, year: number }) => {
   calendarMonth.value = val.month
   calendarYear.value = val.year
@@ -246,7 +277,26 @@ onMounted(() => {
     </div>
 
     <div v-if="dashboardData && !isLoading" class="animate-fade-in space-y-8">
-      <div class="flex justify-center">
+      
+      <div class="flex flex-wrap gap-4 items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200 w-fit mx-auto lg:mx-0">
+        <div class="flex flex-col">
+          <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tahun Ajaran</label>
+          <select v-model="filterAcademicYear" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-[#1A2342] outline-none focus:ring-2 focus:ring-[#26A69A] cursor-pointer">
+            <option v-for="opt in academicYearOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        
+        <div class="flex flex-col">
+          <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Semester</label>
+          <select v-model="filterTerm" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-[#1A2342] outline-none focus:ring-2 focus:ring-[#26A69A] cursor-pointer">
+            <option value="FULL">Satu Tahun Penuh</option>
+            <option value="GANJIL">Ganjil (Ags - Des)</option>
+            <option value="GENAP">Genap (Jan - Jun)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-center mt-2">
         <div class="bg-slate-200 p-1 rounded-2xl flex shadow-inner">
           <button 
             @click="timeScope = 'MONTHLY'"
@@ -258,7 +308,7 @@ onMounted(() => {
             @click="timeScope = 'OVERALL'"
             :class="['px-8 py-3 rounded-xl font-bold text-sm transition-all', timeScope === 'OVERALL' ? 'bg-[#5A8dee] shadow-md text-white' : 'text-slate-500 hover:text-slate-700']"
           >
-            Tahun Ajaran
+            Total Periode
           </button>
         </div>
       </div>
@@ -294,7 +344,12 @@ onMounted(() => {
             </div>
             <span class="text-3xl font-bold text-slate-400">Alfa</span>
           </div>
-     
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-full bg-[#577590] text-white flex items-center justify-center text-xl font-black shadow-lg shadow-blue-200">
+              {{ displayStats.dispen }}
+            </div>
+            <span class="text-3xl font-bold text-[#577590]">Dispensasi</span>
+          </div>
         </div>
 
       </div>
@@ -302,6 +357,8 @@ onMounted(() => {
       <StudentAttendanceCalendar 
         :records="dashboardData.records || []" 
         :mode="rekapMode"
+        :defaultMonth="targetCalendarMonth" 
+        :defaultYear="targetCalendarYear"
         @monthChanged="handleMonthChange"
       />
 

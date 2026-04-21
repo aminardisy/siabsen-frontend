@@ -9,14 +9,21 @@ interface AttendanceRecord {
 
 const props = defineProps<{
   records: AttendanceRecord[],
-  mode: 'SISWA' | 'KELAS'
+  mode: 'SISWA' | 'KELAS',
+  defaultMonth?: number, // <-- TAMBAH INI
+  defaultYear?: number   // <-- TAMBAH INI
 }>()
 
 const emit = defineEmits(['monthChanged'])
 
 const today = new Date()
-const currentMonth = ref(today.getMonth())
-const currentYear = ref(today.getFullYear())
+// Gunakan prop dari parent jika ada, jika tidak gunakan bulan saat ini
+const currentMonth = ref(props.defaultMonth !== undefined ? props.defaultMonth : today.getMonth())
+const currentYear = ref(props.defaultYear !== undefined ? props.defaultYear : today.getFullYear())
+
+// Dengarkan instruksi "Lompat" dari halaman Rekap (Parent)
+watch(() => props.defaultMonth, (newVal) => { if (newVal !== undefined) currentMonth.value = newVal })
+watch(() => props.defaultYear, (newVal) => { if (newVal !== undefined) currentYear.value = newVal })
 
 watch([currentMonth, currentYear], () => {
   emit('monthChanged', { month: currentMonth.value, year: currentYear.value })

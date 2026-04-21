@@ -565,19 +565,18 @@ const openPreviewModal = () => {
 
 const submitCreate = async () => {
   try {
-    // Memanggil store TANPA jenisDispensasi agar sesuai model TypeScript
     await dispensasiStore.create({
       siswaId: selectedSiswa.value!.id,
       tanggalMulai: form.value.tanggalMulai,
       tanggalSelesai: form.value.tanggalSelesai,
       alasan: form.value.alasan,
+      jenis: form.value.type, // <--- KIRIM DATA INI KE BACKEND
       buktiDocUrl: form.value.buktiDocUrl || null
     })
     showPreviewModal.value = false
     showToast('Dispensasi berhasil diajukan!', 'success')
     resetForm()
     
-    // Refresh table & izin hari ini
     fetchRiwayat()
     dispensasiStore.fetchToday()
   } catch (e: any) {
