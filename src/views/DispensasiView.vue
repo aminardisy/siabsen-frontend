@@ -193,8 +193,8 @@
               <tr>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Siswa</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Periode</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Jenis</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Alasan</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Alasan</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Jenis</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Status</th>
                 <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
               </tr>
@@ -220,7 +220,6 @@
                   </div>
                   <p class="text-xs text-slate-500 truncate" :title="item.alasan">{{ item.alasan }}</p>
                 </td>
-                <!-- Tambah ini -->
                 <td class="px-6 py-4 text-center">
                   <span
                     :class="{
@@ -646,7 +645,6 @@ const nextMonth = () => {
   else bulanKalender.value++
 }
 
-// ATD-07: Validasi lalu buka preview modal
 const openPreviewModal = () => {
   formError.value = ''
   if (!selectedSiswa.value) { formError.value = 'Pilih siswa terlebih dahulu.'; return }
