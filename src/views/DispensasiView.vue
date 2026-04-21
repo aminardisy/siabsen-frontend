@@ -233,6 +233,7 @@
                     {{ { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[item.jenis] || '-' }}
                   </span>
                 </td>
+
                 <td class="px-6 py-4 text-center">
                   <span :class="badgeClass(item.statusApproval)" class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border">
                     {{ item.statusApproval }}
@@ -715,6 +716,17 @@ const submitEdit = async () => {
     dispensasiStore.fetchToday()
   } catch (e: any) {
     editError.value = e.response?.data?.message || 'Gagal mengupdate data'
+  }
+}
+
+// Update status dispensasi
+const handleUpdateStatus = async (id: number, status: string) => {
+  if (!status) return
+  try {
+    await dispensasiStore.updateStatus(id, status)
+    showToast(`Status berhasil diubah ke ${status}`, 'success')
+  } catch (e: any) {
+    showToast(e.response?.data?.message || 'Gagal mengubah status', 'error')
   }
 }
 
