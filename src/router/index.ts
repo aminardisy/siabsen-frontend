@@ -91,7 +91,19 @@ const router = createRouter({
       path: '/dispensasi',
       name: 'dispensasi',
       component: () => import('@/views/DispensasiView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, role: ['ADMIN', 'PIKET'] }
+    },
+    {
+      path: '/rekap-siswa',
+      name: 'rekap-siswa-list',
+      component: () => import('../views/RekapSiswaListView.vue'),
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] }
+    },
+    {
+      path: '/rekap-siswa/:id',
+      name: 'rekap-siswa-detail',
+      component: () => import('../views/RekapAbsensiSiswa.vue'),
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] }
     },
   ],
 })

@@ -11,8 +11,10 @@ const authStore = useAuthStore()
 
 const janjiTemuList = ref<JanjiTemuListItemResponse[]>([])
 const isLoading = ref(false)
+const updatingStatusId = ref<number | null>(null)
 
 const canManageJanjiTemu = computed(() => authStore.user?.role === 'SEKRETARIS')
+const canUpdateStatus = computed(() => authStore.user?.role === 'GURU')
 
 const fetchJanjiTemuList = async () => {
   isLoading.value = true
@@ -44,9 +46,15 @@ const formatWaktu = (waktu: string) => {
 
 const statusLabelMap: Record<JanjiTemuStatus, string> = {
   WAITING: 'Menunggu',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
+  // APPROVED: 'Disetujui',
+  // REJECTED: 'Ditolak',
   FINISHED: 'Selesai',
+}
+
+const statusOptions: JanjiTemuStatus[] = ['WAITING','FINISHED']
+
+const isStatusOptionDisabled = (currentStatus: JanjiTemuStatus, optionStatus: JanjiTemuStatus) => {
+  return optionStatus !== currentStatus && optionStatus !== 'FINISHED'
 }
 
 const statusClassMap: Record<JanjiTemuStatus, string> = {
@@ -58,6 +66,23 @@ const statusClassMap: Record<JanjiTemuStatus, string> = {
 
 const openDetail = (id: number) => {
   router.push(`/janji-temu/${id}`)
+}
+
+const handleStatusChange = async (item: JanjiTemuListItemResponse, event: Event) => {
+  const selectedStatus = (event.target as HTMLSelectElement).value as JanjiTemuStatus
+  if (!selectedStatus || selectedStatus === item.status) return
+
+  updatingStatusId.value = item.id
+  try {
+    const response = await janjiTemuService.updateStatus(item.id, { status: selectedStatus })
+    item.status = response.data.status
+    toast.success(response.message || 'Status janji temu berhasil diperbarui')
+  } catch (error: any) {
+    const message = error.response?.data?.message || 'Gagal memperbarui status janji temu'
+    toast.error(message)
+  } finally {
+    updatingStatusId.value = null
+  }
 }
 
 onMounted(fetchJanjiTemuList)
@@ -101,7 +126,7 @@ onMounted(fetchJanjiTemuList)
             <th class="px-6 py-4">Waktu</th>
             <th class="px-6 py-4">Nama Siswa</th>
             <th class="px-6 py-4">Status Pertemuan</th>
-            <th v-if="canManageJanjiTemu" class="px-6 py-4 text-center">Aksi</th>
+            <th v-if="canManageJanjiTemu || canUpdateStatus" class="px-6 py-4 text-center">Aksi</th>
           </tr>
         </thead>
 
@@ -128,13 +153,32 @@ onMounted(fetchJanjiTemuList)
                 {{ statusLabelMap[item.status] }}
               </span>
             </td>
-            <td v-if="canManageJanjiTemu" class="px-6 py-4 text-center">
+            <td v-if="canManageJanjiTemu || canUpdateStatus" class="px-6 py-4 text-center">
               <button
+                v-if="canManageJanjiTemu"
                 @click.stop="router.push(`/janji-temu/edit/${item.id}`)"
                 class="px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
               >
                 Edit
               </button>
+
+              <select
+                v-else
+                :value="item.status"
+                @click.stop
+                @change="handleStatusChange(item, $event)"
+                :disabled="item.status === 'FINISHED' || updatingStatusId === item.id"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 outline-none focus:ring-2 focus:ring-[#26A69A] disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                <option
+                  v-for="status in statusOptions"
+                  :key="status"
+                  :value="status"
+                  :disabled="isStatusOptionDisabled(item.status, status)"
+                >
+                  {{ statusLabelMap[status] }}
+                </option>
+              </select>
             </td>
           </tr>
         </tbody>
