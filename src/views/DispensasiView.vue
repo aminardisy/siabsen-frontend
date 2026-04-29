@@ -220,6 +220,19 @@
                   </div>
                   <p class="text-xs text-slate-500 truncate" :title="item.alasan">{{ item.alasan }}</p>
                 </td>
+                <!-- Tambah ini -->
+                <td class="px-6 py-4 text-center">
+                  <span
+                    :class="{
+                      'bg-blue-100 text-blue-600':     item.jenis === 'DISPENSASI',
+                      'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
+                      'bg-green-100 text-green-600':   item.jenis === 'IZIN',
+                    }"
+                    class="px-2.5 py-1 rounded-full text-[11px] font-bold"
+                  >
+                    {{ { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[item.jenis] || '-' }}
+                  </span>
+                </td>
                 <td class="px-6 py-4 text-center">
                   <span
                     :class="{

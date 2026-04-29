@@ -20,8 +20,8 @@ const canUpdateStatus = computed(() => authStore.user?.role === 'GURU')
 
 const statusLabelMap: Record<JanjiTemuStatus, string> = {
   WAITING: 'Menunggu',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
+  // APPROVED: 'Disetujui',
+  // REJECTED: 'Ditolak',
   FINISHED: 'Selesai',
 }
 
