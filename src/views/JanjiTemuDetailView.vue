@@ -25,10 +25,13 @@ const statusLabelMap: Record<JanjiTemuStatus, string> = {
   FINISHED: 'Selesai',
 }
 
-const statusOptions: JanjiTemuStatus[] = ['WAITING','FINISHED']
+const statusOptions: JanjiTemuStatus[] = ['WAITING', 'APPROVED', 'REJECTED', 'FINISHED']
 
 const isStatusOptionDisabled = (currentStatus: JanjiTemuStatus, optionStatus: JanjiTemuStatus) => {
-  return optionStatus !== currentStatus && optionStatus !== 'FINISHED'
+  if (currentStatus === optionStatus) return false
+  if (currentStatus === 'WAITING') return optionStatus === 'WAITING'
+  if (currentStatus === 'APPROVED') return optionStatus !== 'FINISHED'
+  return true
 }
 
 const statusClassMap: Record<JanjiTemuStatus, string> = {
@@ -125,7 +128,7 @@ onMounted(fetchDetail)
           v-if="canUpdateStatus && detail"
           :value="detail.status"
           @change="handleStatusChange"
-          :disabled="detail.status === 'FINISHED' || isUpdatingStatus"
+          :disabled="detail.status === 'FINISHED' || detail.status === 'REJECTED' || isUpdatingStatus"
           class="px-4 py-2 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-700 outline-none focus:ring-2 focus:ring-[#26A69A] disabled:bg-gray-100 disabled:text-gray-400"
         >
           <option

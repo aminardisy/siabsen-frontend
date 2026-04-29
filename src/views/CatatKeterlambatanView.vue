@@ -1,460 +1,329 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue'
 import { toast } from 'vue-sonner'
 import { siswaService } from '@/services/siswaService'
 import { absensiService } from '@/services/absensiService'
 import type { SiswaResponse } from '@/models/siswa'
 
-interface FormState {
-  tanggal: string
-  waktuMasuk: string
-  alasanPreset: string
-  alasanLainnya: string
-}
-
-interface KeterlambatanHistoryItem {
-  id: number
-  namaSiswa: string
-  namaKelas: string
-  tanggal: string
-  waktuMasuk: string
-  alasanTerlambat: string
-}
-
-const reasonPresets = ['kesiangan', 'macet']
-
-const siswaList = ref<SiswaResponse[]>([])
-const siswaSearch = ref('')
+// ── State Data Master ──
+const allSiswa = ref<SiswaResponse[]>([])
 const selectedSiswa = ref<SiswaResponse | null>(null)
-const isSubmitting = ref(false)
-const isLoadingSiswa = ref(false)
-const isLoadingRiwayat = ref(false)
-const currentTime = ref('')
-const historyHariIni = ref<KeterlambatanHistoryItem[]>([])
-let clockInterval: ReturnType<typeof setInterval> | null = null
+const searchQuery = ref('')
+const selectedDate = ref(new Date().toISOString().slice(0, 10))
 
-const getTodayDate = () => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const formatClock = (date: Date) => {
-  return new Intl.DateTimeFormat('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date)
-}
-
-const formatTanggalLabel = (tanggal: string) => {
-  if (!tanggal) return '-'
-
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(`${tanggal}T00:00:00`))
-}
-
-const formatJamLabel = (waktu: string) => {
-  if (!waktu) return '-'
-  return waktu.slice(0, 5)
-}
-
-const getSiswaLabel = (siswa: SiswaResponse) => siswa.namaLengkap ?? siswa.nama
-const isSiswaAktif = (siswa: SiswaResponse) => (siswa.status ?? '').toLowerCase() === 'aktif'
-
-const form = ref<FormState>({
-  tanggal: getTodayDate(),
+// ── State Form Keterlambatan ──
+const reasonPresets = ['Kesiangan', 'Macet', 'Ban Bocor', 'Masalah Kendaraan']
+const form = ref({
   waktuMasuk: '',
   alasanPreset: '',
   alasanLainnya: '',
+  tanggal: new Date().toISOString().slice(0, 10)
 })
+const isSubmitting = ref(false)
 
-const errors = ref<Record<'siswaId' | 'tanggal' | 'waktuMasuk' | 'alasanTerlambat', string>>({
-  siswaId: '',
-  tanggal: '',
-  waktuMasuk: '',
-  alasanTerlambat: '',
-})
+// ── State Riwayat & UI ──
+const historyHariIni = ref<any[]>([])
+const isLoadingRiwayat = ref(false)
+const currentTime = ref('')
+let clockInterval: any = null
 
+// ── State Kalender (Sinkron dengan Dispensasi) ──
+const now = new Date()
+const bulanKalender = ref(now.getMonth())
+const tahunKalender = ref(now.getFullYear())
+const hariIni = now.getDate()
+const hariDipilih = ref(now.getDate())
+const bulanIni = now.getMonth()
+const tahunIni = now.getFullYear()
+const hariSingkat = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+// ── Computed: Search Logic (Identik dengan Dispensasi) ──
 const filteredSiswa = computed(() => {
-  const query = siswaSearch.value.trim().toLowerCase()
-
-  return siswaList.value
-    .filter((siswa) => {
-      if (!isSiswaAktif(siswa)) return false
-
-      if (!query) return true
-
-      const nama = getSiswaLabel(siswa).toLowerCase()
-      return (
-        nama.includes(query) ||
-        siswa.nisn.toLowerCase().includes(query) ||
-        siswa.namaKelas.toLowerCase().includes(query)
-      )
-    })
-    .slice(0, 6)
+  if (!searchQuery.value) return []
+  const q = searchQuery.value.toLowerCase()
+  return allSiswa.value.filter(s =>
+    (s.nama?.toLowerCase().includes(q) || s.namaLengkap?.toLowerCase().includes(q) || s.nisn?.includes(q)) &&
+    (s.status?.toLowerCase() === 'aktif')
+  )
 })
 
 const resolvedReason = computed(() => {
-  const alasanLainnya = form.value.alasanLainnya.trim()
-  if (alasanLainnya) return alasanLainnya
-  return form.value.alasanPreset.trim()
+  return form.value.alasanLainnya.trim() || form.value.alasanPreset || ''
 })
 
-const detailPreview = computed(() => ({
-  alasan: resolvedReason.value || 'Belum diisi',
-  jam: form.value.waktuMasuk ? formatJamLabel(form.value.waktuMasuk) : '--:--',
-  tanggal: form.value.tanggal ? formatTanggalLabel(form.value.tanggal) : '-',
-}))
+const namabulan = computed(() => new Date(tahunKalender.value, bulanKalender.value).toLocaleString('id-ID', { month: 'long' }))
 
+const hariKalender = computed(() => {
+  const firstDay = new Date(tahunKalender.value, bulanKalender.value, 1).getDay()
+  const jumlahHari = new Date(tahunKalender.value, bulanKalender.value + 1, 0).getDate()
+  const days: (number | null)[] = []
+  for (let i = 0; i < firstDay; i++) days.push(null)
+  for (let d = 1; d <= jumlahHari; d++) days.push(d)
+  return days
+})
+
+// ── Methods: Fetching ──
 const fetchSiswa = async () => {
-  isLoadingSiswa.value = true
   try {
-    siswaList.value = await siswaService.getAll()
-  } catch (_error) {
+    const res = await siswaService.getAll()
+    allSiswa.value = Array.isArray(res) ? res : (res as any).data || []
+  } catch {
     toast.error('Gagal memuat data siswa')
-  } finally {
-    isLoadingSiswa.value = false
-  }
-}
-
-const clearErrors = () => {
-  errors.value = {
-    siswaId: '',
-    tanggal: '',
-    waktuMasuk: '',
-    alasanTerlambat: '',
   }
 }
 
 const fetchRiwayatHariIni = async () => {
   isLoadingRiwayat.value = true
   try {
-    const response = await absensiService.getRiwayatKeterlambatanHarian(getTodayDate())
-    historyHariIni.value = (response.data ?? []).map((item) => ({
-      id: item.id,
-      namaSiswa: item.namaSiswa,
-      namaKelas: item.namaKelas ?? '-',
-      tanggal: item.tanggal,
-      waktuMasuk: item.waktuMasuk,
-      alasanTerlambat: item.alasanTerlambat,
-    }))
-  } catch (_error) {
+    const response = await absensiService.getRiwayatKeterlambatanHarian(selectedDate.value)
+    historyHariIni.value = response.data || []
+  } catch {
     historyHariIni.value = []
-    toast.error('Gagal memuat riwayat keterlambatan hari ini')
   } finally {
     isLoadingRiwayat.value = false
   }
 }
 
-const selectSiswa = (siswa: SiswaResponse) => {
+// ── Methods: Actions ──
+const pilihSiswa = (siswa: SiswaResponse) => {
   selectedSiswa.value = siswa
-  siswaSearch.value = getSiswaLabel(siswa)
-  errors.value.siswaId = ''
-}
-
-const onSearchInput = () => {
-  selectedSiswa.value = null
-  errors.value.siswaId = ''
-}
-
-const handlePresetClick = (reason: string) => {
-  form.value.alasanPreset = reason
-}
-
-const handlePresetDoubleClick = (reason: string) => {
-  if (form.value.alasanPreset === reason) {
-    form.value.alasanPreset = ''
-  }
-}
-
-const validateForm = () => {
-  clearErrors()
-
-  let isValid = true
-
-  if (!selectedSiswa.value) {
-    errors.value.siswaId = 'Siswa wajib dipilih.'
-    isValid = false
-  } else if (!isSiswaAktif(selectedSiswa.value)) {
-    errors.value.siswaId = 'Hanya siswa aktif yang bisa dicatat terlambat.'
-    isValid = false
-  }
-
-  if (!form.value.tanggal) {
-    form.value.tanggal = getTodayDate()
-  }
-
-  if (!form.value.waktuMasuk) {
-    errors.value.waktuMasuk = 'Jam keterlambatan wajib diisi.'
-    isValid = false
-  }
-
-  if (!resolvedReason.value) {
-    errors.value.alasanTerlambat = 'Alasan keterlambatan wajib diisi.'
-    isValid = false
-  }
-
-  return isValid
-}
-
-const extractServerMessage = (error: any) => {
-  const responseData = error?.response?.data
-
-  if (!responseData) {
-    return 'Terjadi kesalahan saat menyimpan data.'
-  }
-
-  if (responseData.message && typeof responseData.message === 'string') {
-    return responseData.message
-  }
-
-  return 'Terjadi kesalahan saat menyimpan data.'
+  searchQuery.value = ''
 }
 
 const submitForm = async () => {
-  if (!validateForm()) {
-    toast.error('Semua field wajib diisi sebelum submit.')
-    return
-  }
+  if (!selectedSiswa.value) return toast.error('Pilih siswa terlebih dahulu')
+  if (!form.value.waktuMasuk) return toast.error('Jam masuk wajib diisi')
+  if (!resolvedReason.value) return toast.error('Alasan wajib diisi')
 
   isSubmitting.value = true
   try {
-    const response = await absensiService.catatKeterlambatan({
-      siswaId: selectedSiswa.value!.id,
-      tanggal: form.value.tanggal || getTodayDate(),
+    await absensiService.catatKeterlambatan({
+      siswaId: selectedSiswa.value.id,
+      tanggal: form.value.tanggal,
       waktuMasuk: form.value.waktuMasuk,
-      alasanTerlambat: resolvedReason.value,
+      alasanTerlambat: resolvedReason.value
     })
+    toast.success('Keterlambatan berhasil dicatat')
 
-    const successMessage = response.message && response.message !== 'success'
-      ? response.message
-      : 'Data keterlambatan berhasil disimpan.'
-
-    toast.success(successMessage)
-
-    await fetchRiwayatHariIni()
-
-    form.value = {
-      tanggal: getTodayDate(),
-      waktuMasuk: '',
-      alasanPreset: '',
-      alasanLainnya: '',
-    }
+    // Reset Form
     selectedSiswa.value = null
-    siswaSearch.value = ''
-    clearErrors()
+    form.value.alasanPreset = ''
+    form.value.alasanLainnya = ''
+    form.value.waktuMasuk = ''
+
+    fetchRiwayatHariIni()
   } catch (error: any) {
-    toast.error(extractServerMessage(error))
+    toast.error(error.response?.data?.message || 'Gagal menyimpan data')
   } finally {
     isSubmitting.value = false
   }
 }
 
+const pilihHari = (day: number) => {
+  hariDipilih.value = day
+  const d = new Date(tahunKalender.value, bulanKalender.value, day)
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  selectedDate.value = d.toISOString().slice(0, 10)
+  form.value.tanggal = selectedDate.value
+}
+
+const prevMonth = () => {
+  if (bulanKalender.value === 0) { bulanKalender.value = 11; tahunKalender.value-- }
+  else bulanKalender.value--
+}
+
+const nextMonth = () => {
+  if (bulanKalender.value === 11) { bulanKalender.value = 0; tahunKalender.value++ }
+  else bulanKalender.value++
+}
+
+
+// ── Lifecycle ──
 onMounted(() => {
   fetchSiswa()
   fetchRiwayatHariIni()
 
-  currentTime.value = formatClock(new Date())
+  currentTime.value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
   clockInterval = setInterval(() => {
-    currentTime.value = formatClock(new Date())
+    currentTime.value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
   }, 1000)
 })
 
-onBeforeUnmount(() => {
-  if (clockInterval) {
-    clearInterval(clockInterval)
-  }
-})
+onBeforeUnmount(() => clearInterval(clockInterval))
+
+watch(selectedDate, () => fetchRiwayatHariIni())
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-[#f4f6f9] px-6 py-7">
-    <div class="mx-auto grid w-full gap-6 lg:grid-cols-[1fr_280px]" style="max-width: 1160px">
-      <section class="rounded-2xl border border-slate-100 bg-[#f8fafc] px-5 py-6 shadow-sm md:px-8">
-        <div class="mx-auto w-full" style="max-width: 620px">
-          <div class="relative mb-7">
-            <svg class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
+  <div class="p-6 bg-slate-50 min-h-screen font-inter">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-[#1A2342]">Pencatatan Keterlambatan</h1>
+        <p class="text-sm text-gray-400 mt-1">Input data siswa terlambat harian</p>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="bg-[#1A2342] text-white px-6 py-2.5 rounded-2xl shadow-lg flex items-center gap-3">
+          <span class="text-[10px] font-bold uppercase tracking-widest opacity-60">Realtime</span>
+          <span class="text-2xl font-black font-mono leading-none">{{ currentTime }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col xl:flex-row gap-6">
+
+      <div class="flex-1 flex flex-col gap-6">
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Cari Siswa</label>
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
-              v-model="siswaSearch"
+              v-model="searchQuery"
               type="text"
-              placeholder="Cari siswa..."
-              class="w-full rounded-full border border-slate-200 bg-white py-3 pl-12 pr-12 text-lg outline-none transition focus:border-[#26A69A] focus:ring-2 focus:ring-[#26A69A]/20"
-              @input="onSearchInput"
+              placeholder="Ketik nama atau NISN siswa..."
+              class="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition"
             />
-            <button
-              v-if="siswaSearch"
-              type="button"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
-              @click="siswaSearch = ''"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
           </div>
 
-          <p v-if="errors.siswaId" class="mb-2 text-sm text-red-500">{{ errors.siswaId }}</p>
-
-          <div class="mb-5 text-center text-[72px] font-bold leading-none text-[#111d39]">
-            {{ currentTime }}
-          </div>
-
-          <div class="mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <button
-              v-for="siswa in filteredSiswa"
+          <div v-if="searchQuery && filteredSiswa.length > 0" class="mt-2 border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white z-20">
+            <div
+              v-for="siswa in filteredSiswa.slice(0, 5)"
               :key="siswa.id"
-              type="button"
-              class="grid w-full grid-cols-[1.2fr_1fr_0.9fr] items-center gap-2 border-b border-slate-100 px-4 py-3 text-left last:border-b-0"
-              :class="selectedSiswa?.id === siswa.id ? 'bg-[#eef6ff]' : 'hover:bg-slate-50'"
-              @click="selectSiswa(siswa)"
+              @click="pilihSiswa(siswa)"
+              class="flex items-center justify-between px-4 py-3 hover:bg-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors"
             >
-              <span class="text-sm font-semibold text-slate-500">{{ siswa.nisn }}</span>
-              <span class="text-sm font-semibold text-slate-700">{{ getSiswaLabel(siswa) }}</span>
-              <span class="text-right text-sm font-semibold text-slate-500">{{ siswa.namaKelas }}</span>
-            </button>
-
-            <div v-if="isLoadingSiswa" class="px-4 py-6 text-center text-sm text-slate-500">Memuat data siswa...</div>
-            <div v-else-if="filteredSiswa.length === 0" class="px-4 py-6 text-center text-sm text-slate-500">Siswa tidak ditemukan.</div>
+              <div>
+                <p class="text-sm font-semibold text-[#1A2342]">{{ siswa.nama }}</p>
+                <p class="text-xs text-gray-400 font-mono">{{ siswa.nisn }}</p>
+              </div>
+              <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-lg font-medium">{{ siswa.namaKelas }}</span>
+            </div>
           </div>
 
-          <div class="mb-9 flex items-center justify-between px-2 text-lg text-slate-500">
-            <span>&larr; Previous</span>
-            <span>Next &rarr;</span>
+          <div v-if="selectedSiswa" class="mt-3 flex items-center justify-between bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 animate-in fade-in slide-in-from-top-1">
+            <div>
+              <p class="text-sm font-bold text-[#1A2342]">{{ selectedSiswa.nama }}</p>
+              <p class="text-xs text-gray-500 font-mono">{{ selectedSiswa.nisn }} · {{ selectedSiswa.namaKelas }}</p>
+            </div>
+            <button @click="selectedSiswa = null" class="text-xs text-red-400 hover:text-red-600 font-bold uppercase tracking-wider">Ganti</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Detail Keterlambatan</label>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Jam Masuk <span class="text-red-400">*</span></label>
+              <input type="time" v-model="form.waktuMasuk" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tanggal <span class="text-red-400">*</span></label>
+              <input type="date" v-model="form.tanggal" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition" />
+            </div>
           </div>
 
-            <form class="rounded-xl border border-slate-200 bg-white p-6" @submit.prevent="submitForm">
-              <h2 class="mb-4 text-lg font-bold text-[#1A2342]">Alasan Telat</h2>
-
-            <div class="mb-4 grid grid-cols-2 gap-3">
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-gray-500 mb-2">Pilih Alasan Cepat</label>
+            <div class="flex flex-wrap gap-2">
               <button
-                v-for="reason in reasonPresets"
-                :key="reason"
-                type="button"
-                  class="rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition"
-                :class="form.alasanPreset === reason ? 'border-[#1A2342] bg-[#1A2342] text-white' : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'"
-                  @click="handlePresetClick(reason)"
-                  @dblclick="handlePresetDoubleClick(reason)"
+                v-for="reason in reasonPresets" :key="reason"
+                @click="form.alasanPreset = reason"
+                class="px-4 py-2 rounded-xl border-2 text-xs font-bold transition-all"
+                :class="form.alasanPreset === reason ? 'border-[#26A69A] bg-teal-50 text-[#26A69A]' : 'border-slate-100 text-slate-400 hover:border-slate-200'"
               >
                 {{ reason }}
               </button>
             </div>
+          </div>
 
-            <div class="mb-4">
-              <label class="mb-2 block text-sm font-medium text-slate-700">Lainnya</label>
-              <textarea
-                v-model="form.alasanLainnya"
-                rows="3"
-                class="w-full rounded-xl border border-slate-200 bg-[#fbfcff] px-4 py-3 text-sm outline-none transition focus:border-[#26A69A]"
-              />
-              <p v-if="errors.alasanTerlambat" class="mt-1 text-sm text-red-500">{{ errors.alasanTerlambat }}</p>
-            </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Keterangan Lainnya</label>
+            <textarea v-model="form.alasanLainnya" rows="3" placeholder="Misal: Pecah ban di jalan..." class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition resize-none"></textarea>
+          </div>
 
-            <div class="mb-5 rounded-xl border border-[#dbe7ff] bg-gradient-to-br from-[#f8fbff] to-[#eef5ff] p-4">
-              <p class="mb-3 text-xs font-bold uppercase tracking-wider text-[#64748b]">Detail Keterlambatan</p>
-              <div class="grid gap-3 md:grid-cols-3">
-                <div class="rounded-lg border border-white/60 bg-white/90 p-3 shadow-sm">
-                  <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Alasan</p>
-                  <p class="mt-1 text-sm font-semibold text-slate-700">{{ detailPreview.alasan }}</p>
-                </div>
-                <div class="rounded-lg border border-white/60 bg-white/90 p-3 shadow-sm">
-                  <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Jam</p>
-                  <p class="mt-1 text-sm font-semibold text-slate-700">{{ detailPreview.jam }}</p>
-                </div>
-                <div class="rounded-lg border border-white/60 bg-white/90 p-3 shadow-sm">
-                  <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Tanggal</p>
-                  <p class="mt-1 text-sm font-semibold text-slate-700">{{ detailPreview.tanggal }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label class="mb-1 block text-sm font-semibold text-slate-600">Tanggal</label>
-                <input
-                  v-model="form.tanggal"
-                  type="date"
-                  class="w-full rounded-xl border border-slate-200 bg-[#fbfcff] px-4 py-3 text-sm outline-none transition focus:border-[#26A69A]"
-                />
-                <p v-if="errors.tanggal" class="mt-1 text-sm text-red-500">{{ errors.tanggal }}</p>
-              </div>
-
-              <div>
-                <label class="mb-1 block text-sm font-semibold text-slate-600">Jam Keterlambatan</label>
-                <input
-                  v-model="form.waktuMasuk"
-                  type="time"
-                  class="w-full rounded-xl border border-slate-200 bg-[#fbfcff] px-4 py-3 text-sm outline-none transition focus:border-[#26A69A]"
-                />
-                <p v-if="errors.waktuMasuk" class="mt-1 text-sm text-red-500">{{ errors.waktuMasuk }}</p>
-              </div>
-            </div>
-
-            <div class="flex justify-center pt-1">
-              <button
-                type="submit"
-                :disabled="isSubmitting"
-                class="rounded-xl bg-[#1A2342] px-16 py-3 text-2xl font-bold text-white shadow-md transition hover:bg-[#24355f] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {{ isSubmitting ? 'Menyimpan...' : 'Simpan' }}
-              </button>
-            </div>
-          </form>
+          <div class="flex justify-end mt-6">
+            <button
+              @click="submitForm"
+              :disabled="isSubmitting"
+              class="px-10 py-3 bg-[#1A2342] text-white rounded-xl font-bold text-sm hover:bg-[#26A69A] shadow-lg active:scale-95 transition-all disabled:opacity-50"
+            >
+              {{ isSubmitting ? 'Menyimpan...' : 'Simpan Keterlambatan' }}
+            </button>
+          </div>
         </div>
-      </section>
 
-      <aside class="rounded-2xl border border-slate-200 bg-[#f8fafc] p-4">
-        <h3 class="mb-4 text-2xl font-bold text-[#1A2342]">Riwayat Hari Ini</h3>
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+          <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <h2 class="font-bold text-[#1A2342]">Riwayat Hari Ini</h2>
+            <span class="text-xs text-gray-400">{{ historyHariIni.length }} catatan</span>
+          </div>
+          <table class="w-full text-left">
+            <thead class="bg-[#1A2342] text-white">
+              <tr>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Siswa</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Jam</th>
+                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Alasan</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-if="historyHariIni.length === 0">
+                <td colspan="3" class="px-6 py-10 text-center text-gray-400 text-sm">Belum ada catatan keterlambatan untuk hari ini</td>
+              </tr>
+              <tr v-for="item in historyHariIni" :key="item.id" class="hover:bg-slate-50/80 transition-colors">
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-slate-700 text-sm">{{ item.namaSiswa }}</p>
+                  <p class="text-xs text-gray-400 font-mono">{{ item.namaKelas }}</p>
+                </td>
+                <td class="px-6 py-4 text-center font-mono font-bold text-[#26A69A]">{{ item.waktuMasuk.slice(0, 5) }}</td>
+                <td class="px-6 py-4 text-xs text-slate-500 italic">"{{ item.alasanTerlambat }}"</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-        <div class="space-y-3">
-          <p v-if="isLoadingRiwayat" class="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">
-            Memuat riwayat hari ini...
-          </p>
+      <div class="xl:w-72 flex flex-col gap-6">
 
-          <article
-            v-for="item in historyHariIni"
-            :key="item.id"
-            class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#c9d9f8] hover:shadow"
-          >
-            <div class="space-y-3">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <p class="text-sm font-bold text-[#1A2342]">{{ item.namaSiswa }}</p>
-                  <p class="text-xs text-slate-500">{{ item.namaKelas }}</p>
-                </div>
-                <span class="rounded-full bg-[#eef4ff] px-2.5 py-1 text-[11px] font-bold text-[#1A4FA3]">Terlambat</span>
-              </div>
-
-              <div class="grid gap-2 sm:grid-cols-2">
-                <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Jam</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ formatJamLabel(item.waktuMasuk) }}</p>
-                </div>
-                <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Tanggal</p>
-                  <p class="text-sm font-semibold text-slate-700">{{ formatTanggalLabel(item.tanggal) }}</p>
-                </div>
-              </div>
-
-              <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Alasan</p>
-                <p class="text-sm text-slate-700">{{ item.alasanTerlambat }}</p>
-              </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <button @click="prevMonth" class="text-gray-400 hover:text-[#26A69A] text-lg font-bold transition">‹</button>
+            <span class="text-sm font-bold text-[#1A2342]">{{ namabulan }} {{ tahunKalender }}</span>
+            <button @click="nextMonth" class="text-gray-400 hover:text-[#26A69A] text-lg font-bold transition">›</button>
+          </div>
+          <div class="grid grid-cols-7 gap-1 text-center">
+            <div v-for="h in hariSingkat" :key="h" class="text-[10px] font-bold text-gray-400 py-1">{{ h }}</div>
+            <div v-for="(day, idx) in hariKalender" :key="idx"
+              class="py-1.5 text-xs rounded-lg cursor-pointer transition-colors"
+              :class="{
+                'invisible': !day,
+                'bg-[#1A2342] text-white font-bold': day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni,
+                'bg-[#26A69A] text-white font-bold': day === hariDipilih && !(day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni),
+                'hover:bg-slate-100 text-slate-600': day && day !== hariIni && day !== hariDipilih
+              }"
+              @click="day && pilihHari(day)"
+            >
+              {{ day || '' }}
             </div>
-          </article>
+          </div>
+        </div>
 
-          <p v-if="!isLoadingRiwayat && historyHariIni.length === 0" class="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">
-            Belum ada catatan keterlambatan hari ini.
+        <div class="bg-teal-50 border border-teal-200 rounded-2xl p-5">
+          <h4 class="text-xs font-bold text-[#26A69A] uppercase tracking-widest mb-2">Info Petugas</h4>
+          <p class="text-[11px] text-teal-700 leading-relaxed">
+            Data keterlambatan akan otomatis masuk ke rekap absensi harian siswa sebagai status <b>"TERLAMBAT"</b>.
           </p>
         </div>
-      </aside>
+
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.font-inter { font-family: 'Inter', sans-serif; }
+</style>
