@@ -742,17 +742,6 @@ const handleUpdateStatus = async (id: number, status: string) => {
   }
 }
 
-// Update status dispensasi
-const handleUpdateStatus = async (id: number, status: string) => {
-  if (!status) return
-  try {
-    await dispensasiStore.updateStatus(id, status)
-    showToast(`Status berhasil diubah ke ${status}`, 'success')
-  } catch (e: any) {
-    showToast(e.response?.data?.message || 'Gagal mengubah status', 'error')
-  }
-}
-
 // Helpers
 
 
