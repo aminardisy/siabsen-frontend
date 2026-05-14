@@ -105,6 +105,12 @@ const router = createRouter({
       component: () => import('@/views/LaporanKeterlambatanView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/konseling',
+      name: 'konseling',
+      component: () => import('@/views/KonselingView.vue'),
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'KESISWAAN', 'WALI_KELAS'] },
+    },
   ],
 })
 
