@@ -136,7 +136,7 @@ router.beforeEach((to, from, next) => {
     next('/login')
   } else if (to.meta.role) {
     const allowedRoles = Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role]
-    if (allowedRoles.includes(userRole)) {
+    if (userRole === 'ADMIN' || allowedRoles.includes(userRole)) {
       next()
     } else {
       alert('Maaf, Anda tidak memiliki akses ke halaman ini!')

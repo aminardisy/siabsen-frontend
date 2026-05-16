@@ -38,9 +38,9 @@
         </template>
       </SidebarItem>
 
-      <!-- Absensi: GURU & SEKRETARIS -->
+      <!-- Absensi: GURU, SEKRETARIS & ADMIN -->
       <SidebarItem
-        v-if="['GURU', 'SEKRETARIS'].includes(authStore.user?.role)"
+        v-if="['GURU', 'SEKRETARIS', 'ADMIN'].includes(authStore.user?.role)"
         to="/absensi"
         label="Absensi"
         :active="route.path.startsWith('/absensi')"
@@ -53,9 +53,9 @@
         </template>
       </SidebarItem>
 
-      <!-- Janji Temu: GURU & SEKRETARIS -->
+      <!-- Janji Temu: GURU, SEKRETARIS & ADMIN -->
       <SidebarItem
-        v-if="['GURU', 'SEKRETARIS'].includes(authStore.user?.role)"
+        v-if="['GURU', 'SEKRETARIS', 'ADMIN'].includes(authStore.user?.role)"
         to="/janji-temu"
         label="Janji Temu"
         :active="route.path.startsWith('/janji-temu')"
@@ -244,9 +244,9 @@
         </SidebarItem>
       </template>
 
-      <!-- Rekap Absensi: GURU & KESISWAAN -->
+      <!-- Rekap Absensi: GURU, KESISWAAN & ADMIN -->
       <SidebarItem
-        v-if="['GURU', 'KESISWAAN'].includes(authStore.user?.role)"
+        v-if="['GURU', 'KESISWAAN', 'ADMIN'].includes(authStore.user?.role)"
         to="/rekap"
         label="Rekap Absensi"
         :active="route.path.startsWith('/rekap')"
