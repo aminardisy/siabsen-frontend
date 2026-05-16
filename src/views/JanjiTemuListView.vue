@@ -127,6 +127,7 @@ onMounted(fetchJanjiTemuList)
           <tr>
             <th class="px-6 py-4">Tanggal</th>
             <th class="px-6 py-4">Waktu</th>
+            <th class="px-6 py-4 text-left">Lokasi</th>
             <th class="px-6 py-4">Nama Siswa</th>
             <th class="px-6 py-4">Status Pertemuan</th>
             <th v-if="canManageJanjiTemu || canUpdateStatus" class="px-6 py-4 text-center">Aksi</th>
@@ -144,7 +145,10 @@ onMounted(fetchJanjiTemuList)
             @keydown.space.prevent="openDetail(item.id)"
           >
             <td class="px-6 py-4 text-sm font-medium text-gray-700">{{ formatTanggal(item.tanggal) }}</td>
-            <td class="px-6 py-4 text-sm font-semibold text-gray-500 font-mono">{{ formatWaktu(item.waktu) }}</td>
+            <td class="px-6 py-4 text-sm font-semibold text-gray-500 font-mono">
+              {{ formatWaktu(item.waktu) }}-{{ item.waktuSelesai ? formatWaktu(item.waktuSelesai) : '?' }}
+            </td>
+            <td class="px-6 py-4 text-sm font-medium text-gray-600">{{ item.lokasi || '-' }}</td>
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ item.namaSiswa }}</td>
             <td class="px-6 py-4">
               <span

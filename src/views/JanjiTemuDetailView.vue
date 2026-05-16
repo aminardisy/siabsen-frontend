@@ -155,8 +155,13 @@ onMounted(fetchDetail)
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Waktu Pertemuan</p>
-            <h2 class="text-xl font-bold text-[#1A2342]">{{ formatTanggal(detail.tanggal) }}, {{ formatWaktu(detail.waktu) }}</h2>
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Tanggal & Waktu Pertemuan</p>
+            <h2 class="text-xl font-bold text-[#1A2342]">{{ formatTanggal(detail.tanggal) }}, {{ formatWaktu(detail.waktu) }} - {{ formatWaktu(detail.waktuSelesai) }}</h2>
+          </div>
+
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 text-right">Lokasi</p>
+            <h2 class="text-xl font-bold text-[#1A2342] text-right">{{ detail.lokasi || '-' }}</h2>
           </div>
 
           <span

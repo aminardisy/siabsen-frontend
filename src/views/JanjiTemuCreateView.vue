@@ -22,6 +22,8 @@ const formJanjiTemu = ref<JanjiTemuCreateRequest>({
   guruId: null,
   tanggal: '',
   waktu: '',
+  waktuSelesai: '',
+  lokasi: '',
   keperluan: '',
 })
 
@@ -30,6 +32,8 @@ const errors = ref({
   guruId: '',
   tanggal: '',
   waktu: '',
+  waktuSelesai: '',
+  lokasi: '',
   keperluan: '',
 })
 
@@ -52,6 +56,8 @@ const validateForm = () => {
     guruId: '',
     tanggal: '',
     waktu: '',
+    waktuSelesai: '',
+    lokasi: '',
     keperluan: '',
   }
 
@@ -73,13 +79,30 @@ const validateForm = () => {
   }
 
   if (!formJanjiTemu.value.waktu) {
-    errors.value.waktu = 'Waktu wajib diisi'
+    errors.value.waktu = 'Waktu mulai wajib diisi'
+    isValid = false
+  }
+
+  if (!formJanjiTemu.value.waktuSelesai) {
+    errors.value.waktuSelesai = 'Waktu selesai wajib diisi'
+    isValid = false
+  }
+
+  if (!formJanjiTemu.value.lokasi.trim()) {
+    errors.value.lokasi = 'Lokasi wajib diisi'
     isValid = false
   }
 
   if (!formJanjiTemu.value.keperluan.trim()) {
     errors.value.keperluan = 'Keperluan wajib diisi'
     isValid = false
+  }
+
+  if (formJanjiTemu.value.waktu && formJanjiTemu.value.waktuSelesai) {
+    if (formJanjiTemu.value.waktuSelesai <= formJanjiTemu.value.waktu) {
+      errors.value.waktuSelesai = 'Waktu selesai tidak boleh lebih awal atau sama dengan waktu mulai'
+      isValid = false
+    }
   }
 
   if (formJanjiTemu.value.tanggal && formJanjiTemu.value.waktu) {
@@ -95,7 +118,10 @@ const validateForm = () => {
 }
 
 const isFormValid = computed(() => {
-  if (!formJanjiTemu.value.siswaId || !formJanjiTemu.value.guruId || !formJanjiTemu.value.tanggal || !formJanjiTemu.value.waktu || !formJanjiTemu.value.keperluan.trim()) {
+  if (!formJanjiTemu.value.siswaId || !formJanjiTemu.value.guruId || !formJanjiTemu.value.tanggal || !formJanjiTemu.value.waktu || !formJanjiTemu.value.waktuSelesai || !formJanjiTemu.value.lokasi.trim() || !formJanjiTemu.value.keperluan.trim()) {
+    return false
+  }
+  if (formJanjiTemu.value.waktuSelesai <= formJanjiTemu.value.waktu) {
     return false
   }
   const selectedDateTime = new Date(`${formJanjiTemu.value.tanggal}T${formJanjiTemu.value.waktu}`)
@@ -121,6 +147,8 @@ const resetForm = () => {
     guruId: null,
     tanggal: '',
     waktu: '',
+    waktuSelesai: '',
+    lokasi: '',
     keperluan: '',
   }
   errors.value = {
@@ -128,6 +156,8 @@ const resetForm = () => {
     guruId: '',
     tanggal: '',
     waktu: '',
+    waktuSelesai: '',
+    lokasi: '',
     keperluan: '',
   }
 }
@@ -145,6 +175,8 @@ const handleSubmit = async () => {
       guruId: formJanjiTemu.value.guruId,
       tanggal: formJanjiTemu.value.tanggal,
       waktu: formJanjiTemu.value.waktu,
+      waktuSelesai: formJanjiTemu.value.waktuSelesai,
+      lokasi: formJanjiTemu.value.lokasi.trim(),
       keperluan: formJanjiTemu.value.keperluan.trim(),
     })
 
@@ -218,17 +250,44 @@ onMounted(fetchFormOptions)
             <p v-if="errors.tanggal" class="text-sm text-red-500">{{ errors.tanggal }}</p>
           </div>
 
-          <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Waktu</label>
-            <input
-              type="time"
-              v-model="formJanjiTemu.waktu"
-              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
-              :disabled="isSubmitting"
-              required
-            />
-            <p v-if="errors.waktu" class="text-sm text-red-500">{{ errors.waktu }}</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-gray-400 uppercase ml-1">Waktu Mulai</label>
+              <input
+                type="time"
+                v-model="formJanjiTemu.waktu"
+                class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+                :disabled="isSubmitting"
+                required
+              />
+              <p v-if="errors.waktu" class="text-sm text-red-500">{{ errors.waktu }}</p>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-gray-400 uppercase ml-1">Waktu Selesai</label>
+              <input
+                type="time"
+                v-model="formJanjiTemu.waktuSelesai"
+                class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+                :disabled="isSubmitting"
+                required
+              />
+              <p v-if="errors.waktuSelesai" class="text-sm text-red-500">{{ errors.waktuSelesai }}</p>
+            </div>
           </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-gray-400 uppercase ml-1">Lokasi</label>
+          <input
+            type="text"
+            v-model="formJanjiTemu.lokasi"
+            class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]"
+            placeholder="Contoh: Ruang Guru"
+            :disabled="isSubmitting"
+            required
+          />
+          <p v-if="errors.lokasi" class="text-sm text-red-500">{{ errors.lokasi }}</p>
         </div>
 
         <div class="space-y-1">
