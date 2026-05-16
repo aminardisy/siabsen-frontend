@@ -121,7 +121,7 @@ const router = createRouter({
       path: '/konseling/:id/hasil',
       name: 'catat-hasil-konseling',
       component: () => import('@/views/CatatHasilKonselingView.vue'),
-      meta: { requiresAuth: true, role: ['KESISWAAN'] },
+      meta: { requiresAuth: true, role: ['KESISWAAN', 'ADMIN'] },
     },
   ],
 })
