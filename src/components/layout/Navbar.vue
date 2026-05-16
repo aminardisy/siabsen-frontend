@@ -41,6 +41,8 @@ const currentPageTitle = computed(() => {
   if (path.startsWith('/accounts')) return 'Manajemen Akun'
   if (path.startsWith('/roles')) return 'Manajemen Role'
   if (path.startsWith('/janji-temu')) return 'Janji Temu'
+  if (path.startsWith('/konseling')) return 'Konseling Siswa'
+  if (path.startsWith('/dispensasi')) return 'Dispensasi & Izin' 
   return 'SiAbsen'
 })
 
