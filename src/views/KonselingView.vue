@@ -139,6 +139,7 @@
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Jenis Pelanggaran</th>
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Status</th>
               <th v-if="canManageKonseling" class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
+              <th v-if="canManageKonseling" class="px-6 py-4"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -158,15 +159,6 @@
               <td v-if="canManageKonseling" class="px-6 py-4 text-center">
                 <div class="flex items-center justify-center gap-2">
                   <button
-                    @click="goCatat(item.id)"
-                    class="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors"
-                    title="Catat Hasil"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </button>
-                  <button
                     @click="openEditModal(item)"
                     class="p-2 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
                     title="Edit"
@@ -185,6 +177,14 @@
                     </svg>
                   </button>
                 </div>
+              </td>
+              <td v-if="canManageKonseling" class="px-6 py-4 text-right">
+                <button
+                  @click="goCatat(item.id)"
+                  class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm whitespace-nowrap"
+                >
+                  Catat Hasil
+                </button>
               </td>
             </tr>
           </tbody>
