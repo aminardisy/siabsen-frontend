@@ -14,7 +14,7 @@ const authStore = useAuthStore()
 
       <GrafikKehadiranKelas />
       
-      <GrafikTrenKehadiran v-if="authStore.getUserRole === 'KESISWAAN'" />
+      <GrafikTrenKehadiran v-if="['KESISWAAN', 'ADMIN'].includes(authStore.getUserRole)" />
     </div>
   </main>
 </template>
