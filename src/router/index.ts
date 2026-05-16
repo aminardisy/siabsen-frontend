@@ -38,7 +38,7 @@ const router = createRouter({
       path: '/catat-keterlambatan',
       name: 'catat-keterlambatan',
       component: () => import('../views/CatatKeterlambatanView.vue'),
-      meta: { requiresAuth: true, role: ['GURU', 'ADMIN'] },
+      meta: { requiresAuth: true, role: ['GURU', 'ADMIN', 'PIKET'] },
     },
     {
       path: '/accounts',
@@ -111,11 +111,17 @@ const router = createRouter({
       component: () => import('@/views/AttendanceStatsView.vue'),
       meta: { requiresAuth: true },
     },
-      {
+    {
       path: '/konseling',
       name: 'konseling',
       component: () => import('@/views/KonselingView.vue'),
-      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'KESISWAAN', 'WALI_KELAS'] },
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'KESISWAAN'] },
+    },
+    {
+      path: '/konseling/:id/hasil',
+      name: 'catat-hasil-konseling',
+      component: () => import('@/views/CatatHasilKonselingView.vue'),
+      meta: { requiresAuth: true, role: ['KESISWAAN'] },
     },
   ],
 })

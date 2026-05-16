@@ -1,6 +1,6 @@
 // src/models/konseling.ts
 
-export type KonselingStatus = 'PENDING' | 'SELESAI' | 'PERLU_MONITORING'
+export type KonselingStatus = 'PENDING' | 'SELESAI'
 
 export interface SiswaWajibKonseling {
   studentId: number
@@ -44,7 +44,7 @@ export interface UpdateKonselingPayload {
 }
 
 /** Status hasil di API (request/response) */
-export type KonselingHasilStatusApi = 'selesai' | 'perlu_monitoring'
+export type KonselingHasilStatusApi = 'pending' | 'selesai'
 
 export interface CatatHasilKonselingRequest {
   summary: string

@@ -218,8 +218,15 @@ watch(selectedDate, () => fetchRiwayatHariIni())
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Jam Masuk <span class="text-red-400">*</span></label>
-              <input type="time" v-model="form.waktuMasuk" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition" />
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">
+                Jam Masuk <span class="text-red-400">*</span>
+              </label>
+
+              <input
+                type="time"
+                v-model="form.waktuMasuk"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-black outline-none focus:ring-2 focus:ring-[#26A69A] transition bg-gray-50"
+              />
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tanggal <span class="text-red-400">*</span></label>
@@ -242,8 +249,16 @@ watch(selectedDate, () => fetchRiwayatHariIni())
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Keterangan Lainnya</label>
-            <textarea v-model="form.alasanLainnya" rows="3" placeholder="Misal: Pecah ban di jalan..." class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition resize-none"></textarea>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">
+              Keterangan Lainnya
+            </label>
+
+            <textarea
+              v-model="form.alasanLainnya"
+              rows="3"
+              placeholder="Misal: Pecah ban di jalan..."
+              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition resize-none bg-gray-50 placeholder:text-gray-400"
+            ></textarea>
           </div>
 
           <div class="flex justify-end mt-6">
