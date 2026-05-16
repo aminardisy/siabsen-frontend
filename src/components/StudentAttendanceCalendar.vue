@@ -14,7 +14,7 @@ const props = defineProps<{
   defaultYear?: number   // <-- TAMBAH INI
 }>()
 
-const emit = defineEmits(['monthChanged'])
+const emit = defineEmits(['monthChanged', 'dayClicked'])
 
 const today = new Date()
 // Gunakan prop dari parent jika ada, jika tidak gunakan bulan saat ini
@@ -160,37 +160,60 @@ const getSiswaBgClass = (status: string | undefined) => {
               </span>
             </div>
 
+           
             <div 
               v-else-if="mode === 'KELAS'" 
-              class="w-full h-full flex flex-col p-3 md:p-4 rounded-2xl border-2 border-slate-50 bg-white shadow-sm hover:shadow-md transition-shadow"
+              @click="cell.isCurrentMonth && $emit('dayClicked', cell.fullDate)"
+              :class="[
+                'group relative w-full h-full flex flex-col p-3 rounded-2xl border-2 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden',
+                (cell.kelasData && cell.kelasData.hadir > 0 && (cell.kelasData.izin + cell.kelasData.sakit + cell.kelasData.alfa) === 0)
+                  ? 'bg-[#90be6d] border-[#90be6d]' 
+                  : 'bg-white border-slate-100 hover:border-[#26A69A]'
+              ]"
             >
-              <span class="font-black text-slate-300 text-sm md:text-xl leading-none mb-3">{{ cell.date }}</span>
+              <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                <div :class="[
+                  'rounded-full p-1 shadow-md',
+                  (cell.kelasData && cell.kelasData.hadir > 0 && (cell.kelasData.izin + cell.kelasData.sakit + cell.kelasData.alfa) === 0) 
+                    ? 'bg-white text-[#90be6d]' 
+                    : 'bg-[#26A69A] text-white'
+                ]">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
+                </div>
+              </div>
+
+              <span 
+                :class="[
+                  'font-black text-base md:text-xl leading-none mb-3 transition-colors',
+                  (cell.kelasData && cell.kelasData.hadir > 0 && (cell.kelasData.izin + cell.kelasData.sakit + cell.kelasData.alfa) === 0)
+                    ? 'text-white/90 group-hover:text-white'
+                    : 'text-slate-300 group-hover:text-[#26A69A]'
+                ]"
+              >
+                {{ cell.date }}
+              </span>
               
-              <div v-if="cell.kelasData" class="grid grid-cols-2 gap-y-3 gap-x-2 mt-auto">
-                <div v-if="cell.kelasData.hadir > 0" class="flex items-center gap-1.5" title="Hadir">
-                  <div class="shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#90be6d] text-white flex items-center justify-center text-[10px] md:text-xs font-black shadow-sm">
-                    {{ cell.kelasData.hadir }}
+              <div v-if="cell.kelasData" class="flex flex-col gap-1.5 mt-auto w-full">
+                
+                <template v-if="cell.kelasData.hadir > 0 && (cell.kelasData.izin + cell.kelasData.sakit + cell.kelasData.alfa) === 0">
+                  <div class="flex items-center justify-between bg-white px-2 py-1.5 rounded-lg shadow-sm">
+                    <span class="text-[9px] md:text-[10px] font-bold text-[#90be6d] uppercase tracking-widest">Lengkap</span>
+                    <span class="text-xs font-black text-[#90be6d]">{{ cell.kelasData.hadir }}</span>
                   </div>
-                  <span class="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none">Hadir</span>
-                </div>
-                <div v-if="cell.kelasData.izin > 0" class="flex items-center gap-1.5" title="Izin">
-                  <div class="shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#f9c74f] text-white flex items-center justify-center text-[10px] md:text-xs font-black shadow-sm">
-                    {{ cell.kelasData.izin }}
+                </template>
+
+                <template v-else>
+                  <div v-if="cell.kelasData.hadir > 0" class="flex items-center justify-between bg-[#90be6d] px-2 py-1.5 rounded-lg shadow-sm">
+                    <span class="text-[9px] md:text-[10px] font-bold text-white uppercase tracking-widest">Hadir</span>
+                    <span class="text-xs font-black text-white">{{ cell.kelasData.hadir }}</span>
                   </div>
-                  <span class="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none">Izin</span>
-                </div>
-                <div v-if="cell.kelasData.sakit > 0" class="flex items-center gap-1.5" title="Sakit">
-                  <div class="shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#f94144] text-white flex items-center justify-center text-[10px] md:text-xs font-black shadow-sm">
-                    {{ cell.kelasData.sakit }}
+
+                  <div v-if="(cell.kelasData.izin + cell.kelasData.sakit + cell.kelasData.alfa) > 0" class="flex items-center justify-between bg-[#f94144] px-2 py-1.5 rounded-lg shadow-sm">
+                    <span class="text-[9px] md:text-[10px] font-bold text-white uppercase tracking-widest">Absen</span>
+                    <span class="text-xs font-black text-white">{{ cell.kelasData.izin + cell.kelasData.sakit + cell.kelasData.alfa }}</span>
                   </div>
-                  <span class="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none">Sakit</span>
-                </div>
-                <div v-if="cell.kelasData.alfa > 0" class="flex items-center gap-1.5" title="Alfa">
-                  <div class="shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#e5e7eb] text-slate-600 flex items-center justify-center text-[10px] md:text-xs font-black shadow-sm">
-                    {{ cell.kelasData.alfa }}
-                  </div>
-                  <span class="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none">Alfa</span>
-                </div>
+                </template>
+
               </div>
             </div>
 

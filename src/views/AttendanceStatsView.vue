@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { reportService, type AttendanceStatsResponse } from '@/services/reportService';
 import { useAuthStore } from '@/stores/auth';
 import { useNotification } from '@/composables/useNotification';
+
+const props = defineProps<{
+  embedded?: boolean
+  startDate?: string
+  endDate?: string
+}>();
 
 const route = useRoute();
 const router = useRouter();
@@ -17,8 +23,9 @@ const isLoading = ref(false);
 const stats = ref<AttendanceStatsResponse | null>(null);
 const activeRankingTab = ref<'terlambat' | 'hadir-tertinggi' | 'hadir-terendah' | 'alfa'>('terlambat');
 
-const startDate = computed(() => route.query.start_date as string || '');
-const endDate = computed(() => route.query.end_date as string || '');
+// When embedded, use props. When standalone, use route query.
+const resolvedStartDate = computed(() => props.startDate || route.query.start_date as string || '');
+const resolvedEndDate = computed(() => props.endDate || route.query.end_date as string || '');
 const gradeLevel = computed(() => route.query.grade_level as string || '');
 
 const gradeLevelDisplay = computed(() => {
@@ -27,11 +34,11 @@ const gradeLevelDisplay = computed(() => {
 });
 
 const periodDisplay = computed(() => {
-  if (startDate.value && endDate.value) {
-    return `${startDate.value} sd ${endDate.value}`;
+  if (resolvedStartDate.value && resolvedEndDate.value) {
+    return `${resolvedStartDate.value} sd ${resolvedEndDate.value}`;
   }
-  if (startDate.value) return `Mulai ${startDate.value}`;
-  if (endDate.value) return `Hingga ${endDate.value}`;
+  if (resolvedStartDate.value) return `Mulai ${resolvedStartDate.value}`;
+  if (resolvedEndDate.value) return `Hingga ${resolvedEndDate.value}`;
   return 'Seluruh Periode';
 });
 
@@ -39,8 +46,8 @@ const fetchStats = async () => {
   isLoading.value = true;
   try {
     const params: { start_date?: string; end_date?: string; grade_level?: string } = {};
-    if (startDate.value) params.start_date = startDate.value;
-    if (endDate.value) params.end_date = endDate.value;
+    if (resolvedStartDate.value) params.start_date = resolvedStartDate.value;
+    if (resolvedEndDate.value) params.end_date = resolvedEndDate.value;
     if (gradeLevel.value) params.grade_level = gradeLevel.value;
 
     const response = await reportService.getAttendanceStats(params);
@@ -60,26 +67,26 @@ const goBack = () => {
   router.push({ name: 'home' });
 };
 
+// Re-fetch when Dashboard changes the month filter
+watch([() => props.startDate, () => props.endDate], () => {
+  if (props.embedded) fetchStats();
+});
+
 onMounted(() => {
-  if (!canView) {
+  if (!props.embedded && !canView) {
     router.push({ name: 'home' });
     return;
   }
   fetchStats();
 });
-
-const StatCard = (props: { label: string; value: string | number; unit?: string }) => ({
-  label: props.label,
-  value: props.value,
-  unit: props.unit
-});
 </script>
 
 <template>
-  <main v-if="canView" class="flex-1 p-3 md:p-4 bg-slate-50 min-h-screen">
-    <div class="max-w-7xl mx-auto space-y-4">
-      <!-- Header - Compact -->
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-4">
+  <div v-if="canView" :class="embedded ? 'space-y-3' : 'flex-1 p-3 md:p-4 bg-slate-50 min-h-screen'">
+    <div :class="embedded ? '' : 'max-w-7xl mx-auto space-y-4'">
+
+      <!-- Header — only shown on standalone page -->
+      <div v-if="!embedded" class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-4">
         <div class="flex-1">
           <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Statistik Kehadiran</h1>
           <div class="flex flex-col md:flex-row gap-1 md:gap-3 mt-1 text-xs md:text-sm text-slate-600">
@@ -97,23 +104,21 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
       </div>
 
       <!-- Loading State -->
-      <div v-if="isLoading" class="flex justify-center items-center h-96">
+      <div v-if="isLoading" class="flex justify-center items-center h-64">
         <div class="flex flex-col items-center gap-3">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#26A69A]"></div>
-          <p class="text-slate-500 font-medium">Memuat statistik kehadiran...</p>
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#26A69A]"></div>
+          <p class="text-slate-500 font-medium text-sm">Memuat statistik kehadiran...</p>
         </div>
       </div>
 
       <!-- Error/Empty State -->
-      <div v-else-if="!stats" class="flex justify-center items-center h-96">
-        <div class="text-center">
-          <p class="text-slate-400 text-lg font-medium">Tidak ada data tersedia</p>
-        </div>
+      <div v-else-if="!stats" class="flex justify-center items-center h-64">
+        <p class="text-slate-400 text-lg font-medium">Tidak ada data tersedia</p>
       </div>
 
       <!-- Stats Content -->
       <div v-else class="space-y-3 md:space-y-4">
-        <!-- Summary Cards - Compact -->
+        <!-- Summary Cards -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3">
           <div class="bg-white rounded-lg p-2.5 md:p-3 shadow border border-slate-200">
             <p class="text-xs md:text-sm text-slate-500 font-medium truncate">Total Absensi</p>
@@ -141,7 +146,7 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
           </div>
         </div>
 
-        <!-- Ringkasan Kehadiran - Compact Horizontal Strip -->
+        <!-- Ringkasan Kehadiran -->
         <div class="bg-white rounded-lg p-3 md:p-4 shadow border border-slate-200">
           <h3 class="text-xs md:text-sm font-bold text-[#1A2342] mb-2">Ringkasan Kehadiran</h3>
           <div class="grid grid-cols-3 md:grid-cols-7 gap-2 md:gap-3 text-center text-xs md:text-sm">
@@ -178,58 +183,27 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
 
         <!-- Ranking Tabs & Table -->
         <div class="bg-white rounded-lg shadow border border-slate-200">
-          <!-- Tabs -->
           <div class="flex border-b border-slate-200 bg-slate-50/50">
             <button
               @click="activeRankingTab = 'terlambat'"
-              :class="[
-                'flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition',
-                activeRankingTab === 'terlambat'
-                  ? 'text-white bg-amber-500 border-b-2 border-amber-600'
-                  : 'text-slate-600 hover:text-slate-800'
-              ]"
-            >
-              Terlambat
-            </button>
+              :class="['flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition', activeRankingTab === 'terlambat' ? 'text-white bg-amber-500 border-b-2 border-amber-600' : 'text-slate-600 hover:text-slate-800']"
+            >Terlambat</button>
             <button
               @click="activeRankingTab = 'hadir-tertinggi'"
-              :class="[
-                'flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition',
-                activeRankingTab === 'hadir-tertinggi'
-                  ? 'text-white bg-green-500 border-b-2 border-green-600'
-                  : 'text-slate-600 hover:text-slate-800'
-              ]"
-            >
-              Hadir Tertinggi
-            </button>
+              :class="['flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition', activeRankingTab === 'hadir-tertinggi' ? 'text-white bg-green-500 border-b-2 border-green-600' : 'text-slate-600 hover:text-slate-800']"
+            >Hadir Tertinggi</button>
             <button
               @click="activeRankingTab = 'hadir-terendah'"
-              :class="[
-                'flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition',
-                activeRankingTab === 'hadir-terendah'
-                  ? 'text-white bg-yellow-500 border-b-2 border-yellow-600'
-                  : 'text-slate-600 hover:text-slate-800'
-              ]"
-            >
-              Hadir Terendah
-            </button>
+              :class="['flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition', activeRankingTab === 'hadir-terendah' ? 'text-white bg-yellow-500 border-b-2 border-yellow-600' : 'text-slate-600 hover:text-slate-800']"
+            >Hadir Terendah</button>
             <button
               @click="activeRankingTab = 'alfa'"
-              :class="[
-                'flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition',
-                activeRankingTab === 'alfa'
-                  ? 'text-white bg-red-500 border-b-2 border-red-600'
-                  : 'text-slate-600 hover:text-slate-800'
-              ]"
-            >
-              Alfa
-            </button>
+              :class="['flex-1 px-3 py-2 md:py-2.5 text-xs md:text-sm font-semibold transition', activeRankingTab === 'alfa' ? 'text-white bg-red-500 border-b-2 border-red-600' : 'text-slate-600 hover:text-slate-800']"
+            >Alfa</button>
           </div>
 
-          <!-- Table Content -->
           <div class="p-3 md:p-4">
-            <!-- Top Late Classes -->
-            <div v-if="activeRankingTab === 'terlambat' && stats.topLateClasses && stats.topLateClasses.length > 0" class="overflow-x-auto">
+            <div v-if="activeRankingTab === 'terlambat' && stats.topLateClasses?.length" class="overflow-x-auto">
               <table class="w-full text-xs md:text-sm">
                 <thead>
                   <tr class="border-b border-slate-200">
@@ -252,8 +226,7 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
               </table>
             </div>
 
-            <!-- Highest Attendance Classes -->
-            <div v-if="activeRankingTab === 'hadir-tertinggi' && stats.highestAttendanceClasses && stats.highestAttendanceClasses.length > 0" class="overflow-x-auto">
+            <div v-if="activeRankingTab === 'hadir-tertinggi' && stats.highestAttendanceClasses?.length" class="overflow-x-auto">
               <table class="w-full text-xs md:text-sm">
                 <thead>
                   <tr class="border-b border-slate-200">
@@ -276,8 +249,7 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
               </table>
             </div>
 
-            <!-- Lowest Attendance Classes -->
-            <div v-if="activeRankingTab === 'hadir-terendah' && stats.lowestAttendanceClasses && stats.lowestAttendanceClasses.length > 0" class="overflow-x-auto">
+            <div v-if="activeRankingTab === 'hadir-terendah' && stats.lowestAttendanceClasses?.length" class="overflow-x-auto">
               <table class="w-full text-xs md:text-sm">
                 <thead>
                   <tr class="border-b border-slate-200">
@@ -300,8 +272,7 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
               </table>
             </div>
 
-            <!-- Highest Alpha Classes -->
-            <div v-if="activeRankingTab === 'alfa' && stats.highestAlphaClasses && stats.highestAlphaClasses.length > 0" class="overflow-x-auto">
+            <div v-if="activeRankingTab === 'alfa' && stats.highestAlphaClasses?.length" class="overflow-x-auto">
               <table class="w-full text-xs md:text-sm">
                 <thead>
                   <tr class="border-b border-slate-200">
@@ -324,12 +295,11 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
               </table>
             </div>
 
-            <!-- Empty State for current tab -->
             <div v-if="
-              (activeRankingTab === 'terlambat' && (!stats.topLateClasses || stats.topLateClasses.length === 0)) ||
-              (activeRankingTab === 'hadir-tertinggi' && (!stats.highestAttendanceClasses || stats.highestAttendanceClasses.length === 0)) ||
-              (activeRankingTab === 'hadir-terendah' && (!stats.lowestAttendanceClasses || stats.lowestAttendanceClasses.length === 0)) ||
-              (activeRankingTab === 'alfa' && (!stats.highestAlphaClasses || stats.highestAlphaClasses.length === 0))
+              (activeRankingTab === 'terlambat' && !stats.topLateClasses?.length) ||
+              (activeRankingTab === 'hadir-tertinggi' && !stats.highestAttendanceClasses?.length) ||
+              (activeRankingTab === 'hadir-terendah' && !stats.lowestAttendanceClasses?.length) ||
+              (activeRankingTab === 'alfa' && !stats.highestAlphaClasses?.length)
             " class="text-center py-6">
               <p class="text-slate-400 text-sm">Tidak ada data untuk tab ini</p>
             </div>
@@ -337,5 +307,5 @@ const StatCard = (props: { label: string; value: string | number; unit?: string 
         </div>
       </div>
     </div>
-  </main>
+  </div>
 </template>

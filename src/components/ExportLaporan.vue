@@ -5,6 +5,10 @@ import { useAuthStore } from '@/stores/auth';
 import { useNotification } from '@/composables/useNotification';
 import type { KelasResponse } from '@/models/kelas';
 
+const props = defineProps<{
+  defaultClassId?: number
+}>()
+
 const authStore = useAuthStore();
 const { success, error } = useNotification();
 
@@ -13,23 +17,32 @@ const canExport = allowedRoles.includes(authStore.getUserRole || '');
 
 const startDate = ref('');
 const endDate = ref('');
-const selectedClass = ref<number | undefined>(undefined);
+const selectedClass = ref<number | undefined>(props.defaultClassId);
 const kelasOptions = ref<KelasResponse[]>([]);
 const isLoading = ref(false);
 
 onMounted(async () => {
   if (canExport) {
     kelasOptions.value = await fetchKelasOptions();
+
+    if (props.defaultClassId) {
+      selectedClass.value = props.defaultClassId;
+    }
   }
 });
 
 const handleExport = async () => {
-  if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
+  if (
+    startDate.value &&
+    endDate.value &&
+    new Date(startDate.value) > new Date(endDate.value)
+  ) {
     error('Tanggal mulai tidak boleh lebih besar dari tanggal akhir.');
     return;
   }
 
   isLoading.value = true;
+
   try {
     const params: {
       format: 'excel';
@@ -37,7 +50,7 @@ const handleExport = async () => {
       end_date?: string;
       class_id?: number;
     } = {
-      format: 'excel'
+      format: 'excel',
     };
 
     if (startDate.value) params.start_date = startDate.value;
@@ -46,42 +59,58 @@ const handleExport = async () => {
 
     const response = await reportService.exportLaporan(params);
 
-    const blob = new Blob([response.data], { type: response.headers['content-type'] });
+    const blob = new Blob([response.data], {
+      type: response.headers['content-type'],
+    });
+
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
+
     link.href = url;
 
     const contentDisposition = response.headers['content-disposition'];
+
     let filename = 'laporan-kehadiran.xlsx';
+
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-      if (filenameMatch.length > 1) {
+
+      if (filenameMatch && filenameMatch.length > 1) {
         filename = filenameMatch[1];
       }
     }
 
     link.setAttribute('download', filename);
+
     document.body.appendChild(link);
+
     link.click();
+
     link.remove();
+
     window.URL.revokeObjectURL(url);
 
     success('Laporan berhasil diekspor.');
   } catch (err: any) {
     if (err.response && err.response.data) {
       const errorBlob = err.response.data as Blob;
+
       const reader = new FileReader();
+
       reader.onload = () => {
         try {
           const errorJson = JSON.parse(reader.result as string);
+
           error(errorJson.message || 'Gagal mengekspor laporan.');
         } catch (e) {
           error('Gagal mengekspor laporan. Silakan coba lagi.');
         }
       };
+
       reader.onerror = () => {
         error('Gagal membaca respons error.');
       };
+
       reader.readAsText(errorBlob);
     } else {
       error('Gagal mengekspor laporan. Silakan coba lagi.');
