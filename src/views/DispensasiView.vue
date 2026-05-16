@@ -201,7 +201,7 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr v-if="riwayatData.length === 0">
-                <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-sm">Tidak ada data dispensasi pada periode ini</td>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm">Tidak ada data dispensasi pada periode ini</td>
               </tr>
               <tr v-for="item in riwayatData" :key="item.id" class="hover:bg-slate-50/80 transition-colors">
                 <td class="px-6 py-4">
