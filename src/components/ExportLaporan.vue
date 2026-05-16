@@ -8,7 +8,7 @@ import type { KelasResponse } from '@/models/kelas';
 const authStore = useAuthStore();
 const { success, error } = useNotification();
 
-const allowedRoles = ['GURU', 'KESISWAAN'];
+const allowedRoles = ['GURU', 'KESISWAAN', 'ADMIN'];
 const canExport = allowedRoles.includes(authStore.getUserRole || '');
 
 const startDate = ref('');

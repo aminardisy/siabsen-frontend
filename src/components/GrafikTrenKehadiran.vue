@@ -21,7 +21,7 @@ ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScal
 const authStore = useAuthStore();
 const { error } = useNotification();
 
-const canViewChart = authStore.getUserRole === 'KESISWAAN';
+const canViewChart = ['KESISWAAN', 'ADMIN'].includes(authStore.getUserRole || '');
 
 const startDate = ref('');
 const endDate = ref('');
