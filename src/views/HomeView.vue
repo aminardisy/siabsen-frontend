@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import GrafikKehadiranKelas from '@/components/GrafikKehadiranKelas.vue'
+import GrafikTrenKehadiran from '@/components/GrafikTrenKehadiran.vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 </script>
 
 <template>
@@ -9,6 +13,8 @@ import GrafikKehadiranKelas from '@/components/GrafikKehadiranKelas.vue'
       <p class="text-slate-500 mb-6">Ringkasan data kehadiran sekolah Anda.</p>
 
       <GrafikKehadiranKelas />
+      
+      <GrafikTrenKehadiran v-if="authStore.getUserRole === 'KESISWAAN'" />
     </div>
   </main>
 </template>
