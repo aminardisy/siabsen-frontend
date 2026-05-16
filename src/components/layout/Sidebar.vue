@@ -68,8 +68,8 @@
         </template>
       </SidebarItem>
 
-      <!-- ======================== GURU ======================== -->
-      <template v-if="authStore.user?.role === 'GURU'">
+      <!-- ======================== GURU & PIKET ======================== -->
+      <template v-if="['GURU', 'PIKET'].includes(authStore.user?.role)">
         <div class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest" v-if="!uiStore.isSidebarCollapsed">
           Sistem
         </div>
@@ -86,7 +86,10 @@
             </svg>
           </template>
         </SidebarItem>
+      </template>
 
+      <!-- ======================== GURU ONLY ======================== -->
+      <template v-if="authStore.user?.role === 'GURU'">
         <SidebarItem
           to="/laporan-keterlambatan"
           label="Laporan Keterlambatan"
