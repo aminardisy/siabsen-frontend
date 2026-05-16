@@ -30,7 +30,7 @@ const form = ref<CatatHasilFormState>({
 const loadDetail = async () => {
   if (!Number.isFinite(konselingId.value) || konselingId.value < 1) {
     toast.error('ID konseling tidak valid')
-    router.push({ name: 'konseling-menunggu-hasil' })
+    router.push({ name: 'konseling' })
     return
   }
   loading.value = true
@@ -45,7 +45,7 @@ const loadDetail = async () => {
   } catch (e: any) {
     const msg = e.response?.data?.message || 'Gagal memuat data konseling'
     toast.error(msg)
-    router.push({ name: 'konseling-menunggu-hasil' })
+    router.push({ name: 'konseling' })
   } finally {
     loading.value = false
   }
@@ -82,7 +82,7 @@ const submit = async () => {
 }
 
 const cancel = () => {
-  router.push({ name: 'konseling-menunggu-hasil' })
+  router.push({ name: 'konseling' })
 }
 
 const getStatusBadgeClass = (status: string) => {

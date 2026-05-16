@@ -102,7 +102,7 @@
 
         <SidebarItem
           to="/konseling"
-          label="Riwayat Konseling"
+          label="Konseling"
           :active="route.path === '/konseling'"
           :isCollapsed="uiStore.isSidebarCollapsed"
         >
@@ -122,23 +122,9 @@
         </div>
 
         <SidebarItem
-          to="/konseling/menunggu"
-          label="Catat Hasil Konseling"
-          :active="route.path.startsWith('/konseling/menunggu') || route.path.includes('/hasil')"
-          :isCollapsed="uiStore.isSidebarCollapsed"
-        >
-          <template #icon>
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </template>
-        </SidebarItem>
-
-        <SidebarItem
           to="/konseling"
-          label="Manajemen Konseling"
-          :active="route.path === '/konseling'"
+          label="Konseling"
+          :active="route.path.startsWith('/konseling')"
           :isCollapsed="uiStore.isSidebarCollapsed"
         >
           <template #icon>
