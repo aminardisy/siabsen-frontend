@@ -10,7 +10,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const { error } = useNotification();
 
-const allowedRoles = ['GURU', 'KESISWAAN'];
+const allowedRoles = ['GURU', 'KESISWAAN', 'ADMIN'];
 const canView = allowedRoles.includes(authStore.getUserRole || '');
 
 const isLoading = ref(false);
