@@ -220,7 +220,6 @@
                   </div>
                   <p class="text-xs text-slate-500 truncate" :title="item.alasan">{{ item.alasan }}</p>
                 </td>
-                <!-- Tambah ini -->
                 <td class="px-6 py-4 text-center">
                   <span
                     :class="{
@@ -742,7 +741,6 @@ const handleUpdateStatus = async (id: number, status: string) => {
   }
 }
 
-// Helpers
 
 
 // ── Helpers Visual ──
