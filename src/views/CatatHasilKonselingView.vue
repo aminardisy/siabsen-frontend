@@ -36,7 +36,7 @@ const loadDetail = async () => {
   loading.value = true
   fieldErrors.value = {}
   try {
-    const d = await konselingService.getKonselingDetailForWali(konselingId.value)
+    const d = await konselingService.getKonselingDetailForKesiswaan(konselingId.value)
     detail.value = d
     form.value.summary = d.summary?.trim() ?? ''
     form.value.recommendation = d.recommendation?.trim() ?? ''
@@ -68,7 +68,6 @@ const submit = async () => {
     }
     const res = await konselingService.catatHasilKonseling(konselingId.value, payload)
     toast.success(res.message || 'Hasil konseling berhasil disimpan')
-    // Refresh detail to show updated data if needed, or just stay on page as requested
     await loadDetail()
   } catch (e: any) {
     const status = e.response?.status
@@ -111,7 +110,7 @@ onMounted(loadDetail)
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <h1 class="text-lg font-bold text-slate-800">Catat Hasil Konseling</h1>
+          <h1 class="text-lg font-bold text-slate-800">Catat Hasil Konseling (Kesiswaan)</h1>
         </div>
         <div v-if="detail" class="hidden md:block">
           <span :class="['px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider', getStatusBadgeClass(detail.status)]">
@@ -179,7 +178,7 @@ onMounted(loadDetail)
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Hasil & Tindak Lanjut
+              Hasil & Tindak Lanjut (Kesiswaan)
             </h2>
           </div>
           <form class="p-6 md:p-8 space-y-6" @submit.prevent="submit">

@@ -121,13 +121,13 @@ const router = createRouter({
       path: '/konseling/menunggu',
       name: 'konseling-menunggu-hasil',
       component: () => import('@/views/KonselingMenungguHasilView.vue'),
-      meta: { requiresAuth: true, role: ['GURU'] },
+      meta: { requiresAuth: true, role: ['KESISWAAN'] },
     },
     {
       path: '/konseling/:id/hasil',
       name: 'catat-hasil-konseling',
       component: () => import('@/views/CatatHasilKonselingView.vue'),
-      meta: { requiresAuth: true, role: ['GURU'] },
+      meta: { requiresAuth: true, role: ['KESISWAAN'] },
     },
   ],
 })

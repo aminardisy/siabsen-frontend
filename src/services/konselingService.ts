@@ -61,7 +61,7 @@ export const deleteKonseling = async (id: number): Promise<void> => {
   await api.delete(`/konseling/${id}`)
 }
 
-/** Catat hasil konseling — hanya wali kelas */
+/** Catat hasil konseling — hanya kesiswaan */
 export const catatHasilKonseling = async (
   id: number,
   payload: CatatHasilKonselingRequest
@@ -70,16 +70,16 @@ export const catatHasilKonseling = async (
   return res.data
 }
 
-/** Detail konseling untuk prefill form hasil (akses wali kelas) */
-export const getKonselingDetailForWali = async (
+/** Detail konseling untuk prefill form hasil (akses kesiswaan) */
+export const getKonselingDetailForKesiswaan = async (
   id: number
 ): Promise<KonselingDetailResponse> => {
-  const res = await api.get(`/konseling/wali/${id}`)
+  const res = await api.get(`/konseling/kesiswaan/${id}`)
   return res.data.data
 }
 
-/** List jadwal konseling status PENDING untuk wali kelas login */
-export const listMenungguHasilForWali = async (): Promise<RiwayatKonselingItem[]> => {
-  const res = await api.get('/konseling/wali/menunggu')
+/** List jadwal konseling status PENDING untuk kesiswaan login */
+export const listMenungguHasilForKesiswaan = async (): Promise<RiwayatKonselingItem[]> => {
+  const res = await api.get('/konseling/kesiswaan/menunggu')
   return res.data.data || []
 }
