@@ -3,6 +3,8 @@ export interface JanjiTemuCreateRequest {
   guruId: number | null
   tanggal: string
   waktu: string
+  waktuSelesai: string
+  lokasi: string
   keperluan: string
 }
 
@@ -11,6 +13,8 @@ export interface JanjiTemuUpdateRequest {
   guruId: number | null
   tanggal: string
   waktu: string
+  waktuSelesai: string
+  lokasi: string
   keperluan: string
 }
 
@@ -24,6 +28,8 @@ export interface JanjiTemuListItemResponse {
   id: number
   tanggal: string
   waktu: string
+  waktuSelesai: string
+  lokasi: string
   namaSiswa: string
   status: JanjiTemuStatus
 }
@@ -32,6 +38,8 @@ export interface JanjiTemuDetailResponse {
   id: number
   tanggal: string
   waktu: string
+  waktuSelesai: string
+  lokasi: string
   keperluan: string
   status: JanjiTemuStatus
   waktuPengajuan: string
@@ -56,4 +64,7 @@ export interface JanjiTemuResponse {
   keperluan: string
   status: JanjiTemuStatus
   waktuPengajuan: string
+  waktu: string
+  waktuSelesai: string
+  lokasi: string
 }
