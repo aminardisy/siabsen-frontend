@@ -26,13 +26,56 @@ const canViewChart = authStore.getUserRole === 'KESISWAAN';
 const startDate = ref('');
 const endDate = ref('');
 const groupBy = ref<'weekly' | 'monthly'>('monthly');
+
+// Monthly Dropdown State
+const months = [
+  { label: 'Januari', value: '01' },
+  { label: 'Februari', value: '02' },
+  { label: 'Maret', value: '03' },
+  { label: 'April', value: '04' },
+  { label: 'Mei', value: '05' },
+  { label: 'Juni', value: '06' },
+  { label: 'Juli', value: '07' },
+  { label: 'Agustus', value: '08' },
+  { label: 'September', value: '09' },
+  { label: 'Oktober', value: '10' },
+  { label: 'November', value: '11' },
+  { label: 'Desember', value: '12' },
+];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 5 }, (_, i) => String(currentYear - i));
+
+const startMonth = ref('');
+const startYear = ref('');
+const endMonth = ref('');
+const endYear = ref('');
+
 const isLoading = ref(false);
 const trendDataRaw = ref<AttendanceTrendData[]>([]);
 const hasLoaded = ref(false);
 
 const fetchData = async () => {
-  if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
-    error('Tanggal mulai tidak boleh lebih besar dari tanggal akhir.');
+  let startParam = '';
+  let endParam = '';
+
+  if (groupBy.value === 'monthly') {
+    if (startMonth.value && startYear.value) {
+      startParam = `${startYear.value}-${startMonth.value}-01`;
+    }
+    if (endMonth.value && endYear.value) {
+      const year = Number(endYear.value);
+      const month = Number(endMonth.value);
+      const lastDay = new Date(year, month, 0).getDate();
+      endParam = `${endYear.value}-${endMonth.value}-${String(lastDay).padStart(2, '0')}`;
+    }
+  } else {
+    startParam = startDate.value;
+    endParam = endDate.value;
+  }
+
+  if (startParam && endParam && new Date(startParam) > new Date(endParam)) {
+    error('Tanggal/Bulan mulai tidak boleh lebih besar dari tanggal/bulan akhir.');
     return;
   }
 
@@ -42,8 +85,8 @@ const fetchData = async () => {
     const params: { start_date?: string; end_date?: string; group_by: 'weekly' | 'monthly' } = {
       group_by: groupBy.value
     };
-    if (startDate.value) params.start_date = startDate.value;
-    if (endDate.value) params.end_date = endDate.value;
+    if (startParam) params.start_date = startParam;
+    if (endParam) params.end_date = endParam;
 
     const response = await reportService.getAttendanceTrend(params);
     if (response.success && response.data) {
@@ -65,11 +108,35 @@ const fetchData = async () => {
 
 onMounted(() => {
   if (canViewChart) {
+    // Set default for monthly if needed
+    if (groupBy.value === 'monthly') {
+        const now = new Date();
+        endMonth.value = String(now.getMonth() + 1).padStart(2, '0');
+        endYear.value = String(now.getFullYear());
+        
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+        startMonth.value = String(threeMonthsAgo.getMonth() + 1).padStart(2, '0');
+        startYear.value = String(threeMonthsAgo.getFullYear());
+    }
     fetchData();
   }
 });
 
 watch(groupBy, () => {
+    startDate.value = '';
+    endDate.value = '';
+    startMonth.value = '';
+    startYear.value = '';
+    endMonth.value = '';
+    endYear.value = '';
+    
+    if (groupBy.value === 'monthly') {
+        const now = new Date();
+        endMonth.value = String(now.getMonth() + 1).padStart(2, '0');
+        endYear.value = String(now.getFullYear());
+    }
+    
     fetchData();
 });
 
@@ -189,23 +256,52 @@ const chartOptions = {
           <option value="weekly">Mingguan</option>
         </select>
         
-        <input 
-          type="date" 
-          v-model="startDate" 
-          class="w-full sm:w-auto bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-sm text-gray-700 font-semibold cursor-pointer"
-        />
-        <span class="text-slate-400 font-medium hidden sm:block">sd</span>
-        <input 
-          type="date" 
-          v-model="endDate" 
-          class="w-full sm:w-auto bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-sm text-gray-700 font-semibold cursor-pointer"
-        />
+        <!-- Monthly Filter -->
+        <template v-if="groupBy === 'monthly'">
+            <div class="flex gap-1 items-center">
+                <select v-model="startMonth" class="bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-xs font-semibold cursor-pointer">
+                    <option value="" disabled>Bulan</option>
+                    <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
+                </select>
+                <select v-model="startYear" class="bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-xs font-semibold cursor-pointer">
+                    <option value="" disabled>Tahun</option>
+                    <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+                </select>
+            </div>
+            <span class="text-slate-400 font-medium hidden sm:block text-xs uppercase">sd</span>
+            <div class="flex gap-1 items-center">
+                <select v-model="endMonth" class="bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-xs font-semibold cursor-pointer">
+                    <option value="" disabled>Bulan</option>
+                    <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
+                </select>
+                <select v-model="endYear" class="bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-xs font-semibold cursor-pointer">
+                    <option value="" disabled>Tahun</option>
+                    <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+                </select>
+            </div>
+        </template>
+
+        <!-- Weekly Filter -->
+        <template v-else>
+            <input 
+              type="date" 
+              v-model="startDate" 
+              class="w-full sm:w-auto bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-sm text-gray-700 font-semibold cursor-pointer"
+            />
+            <span class="text-slate-400 font-medium hidden sm:block text-xs uppercase">sd</span>
+            <input 
+              type="date" 
+              v-model="endDate" 
+              class="w-full sm:w-auto bg-white border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-sm text-gray-700 font-semibold cursor-pointer"
+            />
+        </template>
+
         <button 
           @click="fetchData"
           :disabled="isLoading"
-          class="w-full sm:w-auto bg-[#1A2342] hover:bg-slate-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 h-[40px] flex justify-center items-center"
+          class="w-full sm:w-auto bg-[#1A2342] hover:bg-slate-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 h-[40px] flex justify-center items-center text-sm"
         >
-          {{ isLoading ? 'Memuat...' : 'Terapkan Filter' }}
+          {{ isLoading ? 'Memuat...' : 'Terapkan' }}
         </button>
       </div>
     </div>
@@ -213,7 +309,7 @@ const chartOptions = {
     <div class="p-6 flex items-center justify-center" style="height: 420px;">
       <div v-if="isLoading" class="flex flex-col items-center gap-3">
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#26A69A]"></div>
-        <p class="text-slate-500 font-medium font-sm">Memuat data tren...</p>
+        <p class="text-slate-500 font-medium text-sm">Memuat data tren</p>
       </div>
       
       <div v-else-if="hasLoaded && trendDataRaw.length === 0" class="flex flex-col items-center gap-3 text-slate-400">
