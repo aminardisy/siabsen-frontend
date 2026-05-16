@@ -106,16 +106,10 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/konseling/menunggu-hasil',
-      name: 'konseling-menunggu-hasil',
-      component: () => import('@/views/KonselingMenungguHasilView.vue'),
-      meta: { requiresAuth: true, role: ['GURU'] },
-    },
-    {
-      path: '/konseling/menunggu-hasil/:id',
-      name: 'konseling-catat-hasil',
-      component: () => import('@/views/CatatHasilKonselingView.vue'),
-      meta: { requiresAuth: true, role: ['GURU'] },
+      path: '/konseling',
+      name: 'konseling',
+      component: () => import('@/views/KonselingView.vue'),
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'KESISWAAN', 'WALI_KELAS'] },
     },
   ],
 })
