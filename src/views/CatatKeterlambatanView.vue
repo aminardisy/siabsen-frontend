@@ -110,6 +110,7 @@ const submitForm = async () => {
   
   // Validasi Tanggal (Gunakan local date untuk menghindari issues timezone)
   const [y, m, d] = form.value.tanggal.split('-').map(Number)
+  if (!y || !m || !d) return toast.error('Format tanggal tidak valid')
   const selectedDateObj = new Date(y, m - 1, d)
   
   const today = new Date()
