@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { guruService } from '@/services/guruService'
+import { guruService, importGuruExcel } from '@/services/guruService'
 import { toast } from 'vue-sonner'
 import type { GuruRequest, GuruResponse } from '@/models/guru'
 import BaseSearch from '@/components/layout/BaseSearch.vue'
@@ -85,6 +85,24 @@ const handleDelete = async (id: number, nama: string) => {
   }
 }
 
+const fileInputGuru = ref<HTMLInputElement | null>(null)
+
+const handleImportGuru = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    const file = target.files[0]
+    try {
+      const res = await importGuruExcel(file)
+      toast.success(res.message || 'Data guru/staf berhasil diimpor!')
+      fetchData() // Auto-refresh isi tabel guru
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengimpor data guru. Pastikan NUPTK tepat 16 digit angka.')
+    } finally {
+      target.value = '' // Reset input file
+    }
+  }
+}
+
 const openModal = (mode: 'add' | 'edit', data: any = null) => {
   modalMode.value = mode
   if (mode === 'edit' && data) {
@@ -137,6 +155,20 @@ onMounted(fetchData)
       </div>
       <div class="flex items-center gap-4">
         <BaseSearch v-model="searchQuery" placeholder="Cari NUPTK atau Nama..." />
+
+        <input type="file" ref="fileInputGuru" class="hidden" accept=".xlsx, .xls" @change="handleImportGuru" />
+
+        <button
+          @click="fileInputGuru?.click()"
+          type="button"
+          class="border border-slate-200 bg-white hover:bg-slate-50 text-[#1A2342] px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Import Excel
+        </button>
+
         <button
           @click="openModal('add')"
           class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-teal-100 transition-all"
@@ -200,14 +232,14 @@ onMounted(fetchData)
           <div class="space-y-1">
             <label class="text-xs font-bold text-gray-400 uppercase ml-1">Tipe Pegawai</label>
             <div class="flex gap-2">
-              <button 
+              <button
                 v-for="tipe in tipePegawaiOptions" :key="tipe.value"
                 type="button"
                 @click="formGuru.tipePegawai = tipe.value"
                 :class="[
                   'flex-1 py-2 rounded-xl text-xs font-black transition-all border',
-                  formGuru.tipePegawai === tipe.value 
-                    ? 'bg-[#1A2342] text-white border-[#1A2342]' 
+                  formGuru.tipePegawai === tipe.value
+                    ? 'bg-[#1A2342] text-white border-[#1A2342]'
                     : 'bg-white text-gray-400 border-gray-100 hover:bg-gray-50'
                 ]"
               >
@@ -223,13 +255,13 @@ onMounted(fetchData)
 
           <div class="space-y-1">
             <label class="text-xs font-bold text-gray-400 uppercase ml-1">NUPTK (16 Digit)</label>
-            <input 
-              v-model="formGuru.nuptk" 
+            <input
+              v-model="formGuru.nuptk"
               @input="handleNuptkInput"
-              type="text" 
-              :class="['w-full bg-gray-50 border p-3 rounded-xl outline-none focus:ring-2 transition-all', isNuptkInvalid ? 'border-red-400 focus:ring-red-100' : 'border-gray-100 focus:ring-[#26A69A]']" 
+              type="text"
+              :class="['w-full bg-gray-50 border p-3 rounded-xl outline-none focus:ring-2 transition-all', isNuptkInvalid ? 'border-red-400 focus:ring-red-100' : 'border-gray-100 focus:ring-[#26A69A]']"
               placeholder="Contoh: 1234567890123456"
-              required 
+              required
             />
             <p v-if="isNuptkInvalid" class="text-[10px] text-red-500 font-bold ml-1 animate-pulse">
               NUPTK harus 16 digit (Saat ini: {{ formGuru.nuptk.length }})
@@ -259,8 +291,8 @@ onMounted(fetchData)
 
           <div class="flex gap-4 pt-6">
             <button type="button" @click="isModalOpen = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl">Batal</button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               :disabled="!isFormValid"
               :class="['flex-1 py-3 text-white rounded-xl font-bold shadow-xl transition-all', isFormValid ? 'bg-[#1A2342] hover:bg-slate-800' : 'bg-gray-300 cursor-not-allowed']"
             >

@@ -2,9 +2,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { toast } from 'vue-sonner'
 import type { SiswaResponse, SiswaRequest } from '@/models/siswa'
-import { siswaService } from '@/services/siswaService'
+import { siswaService, importSiswaExcel } from '@/services/siswaService'
 import { kelasService } from '@/services/kelasService'
 import BaseSearch from '@/components/layout/BaseSearch.vue'
+
 
 // 1. State Management
 const siswaList = ref<SiswaResponse[]>([])
@@ -126,6 +127,25 @@ const openModal = (mode: 'add' | 'edit', data: SiswaResponse | null = null) => {
   isModalOpen.value = true
 }
 
+// Pointer ref untuk memicu input file tersembunyi
+const fileInputSiswa = ref<HTMLInputElement | null>(null)
+
+const handleImportSiswa = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    const file = target.files[0]
+    try {
+      const res = await importSiswaExcel(file)
+      toast.success(res.message || 'Data siswa berhasil diimpor!')
+      fetchData()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengimpor data siswa. Periksa format kolom Excel Anda.')
+    } finally {
+      target.value = ''
+    }
+  }
+}
+
 onMounted(fetchData)
 </script>
 
@@ -139,6 +159,20 @@ onMounted(fetchData)
 
       <div class="flex items-center gap-4">
         <BaseSearch v-model="searchQuery" placeholder="Cari Nama, NISN, atau Kelas..." />
+
+        <input type="file" ref="fileInputSiswa" class="hidden" accept=".xlsx, .xls" @change="handleImportSiswa" />
+
+        <button
+          @click="fileInputSiswa?.click()"
+          type="button"
+          class="border border-slate-200 bg-white hover:bg-slate-50 text-[#1A2342] px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Import Excel
+        </button>
+
         <button @click="openModal('add')" class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-100">
           + Tambah Siswa
         </button>
