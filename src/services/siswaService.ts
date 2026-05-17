@@ -22,4 +22,18 @@ export const siswaService = {
   // Menonaktifkan siswa (Soft Delete)
   deactivate: (id: number, alasan: string) =>
     api.patch(`/siswa/${id}/nonaktif`, { alasan })
+
+
 };
+
+export const importSiswaExcel = async (file: File): Promise<{ message: string }> => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await api.post('/siswa/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+  return res.data
+}
