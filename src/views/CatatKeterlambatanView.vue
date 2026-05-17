@@ -37,6 +37,21 @@ const bulanIni = now.getMonth()
 const tahunIni = now.getFullYear()
 const hariSingkat = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
+const isDateDisabled = (day: number) => {
+  const d = new Date(tahunKalender.value, bulanKalender.value, day)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  // Future date
+  if (d > today) return true
+  
+  // Weekend (0 = Minggu, 6 = Sabtu)
+  const dayOfWeek = d.getDay()
+  if (dayOfWeek === 0 || dayOfWeek === 6) return true
+  
+  return false
+}
+
 // ── Computed: Search Logic (Identik dengan Dispensasi) ──
 const filteredSiswa = computed(() => {
   if (!searchQuery.value) return []
@@ -92,6 +107,23 @@ const pilihSiswa = (siswa: SiswaResponse) => {
 
 const submitForm = async () => {
   if (!selectedSiswa.value) return toast.error('Pilih siswa terlebih dahulu')
+  
+  // Validasi Tanggal (Gunakan local date untuk menghindari issues timezone)
+  const [y, m, d] = form.value.tanggal.split('-').map(Number)
+  const selectedDateObj = new Date(y, m - 1, d)
+  
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  if (selectedDateObj > today) {
+    return toast.error('Tanggal keterlambatan tidak boleh melebihi hari ini')
+  }
+  
+  const dayOfWeek = selectedDateObj.getDay()
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return toast.error('Keterlambatan tidak dapat dicatat pada hari weekend')
+  }
+
   if (!form.value.waktuMasuk) return toast.error('Jam masuk wajib diisi')
   if (!resolvedReason.value) return toast.error('Alasan wajib diisi')
 
@@ -120,6 +152,7 @@ const submitForm = async () => {
 }
 
 const pilihHari = (day: number) => {
+  if (isDateDisabled(day)) return
   hariDipilih.value = day
   const d = new Date(tahunKalender.value, bulanKalender.value, day)
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
@@ -230,7 +263,12 @@ watch(selectedDate, () => fetchRiwayatHariIni())
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tanggal <span class="text-red-400">*</span></label>
-              <input type="date" v-model="form.tanggal" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition" />
+              <input 
+                type="date" 
+                v-model="form.tanggal" 
+                :max="new Date().toISOString().split('T')[0]"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition" 
+              />
             </div>
           </div>
 
@@ -313,12 +351,14 @@ watch(selectedDate, () => fetchRiwayatHariIni())
           <div class="grid grid-cols-7 gap-1 text-center">
             <div v-for="h in hariSingkat" :key="h" class="text-[10px] font-bold text-gray-400 py-1">{{ h }}</div>
             <div v-for="(day, idx) in hariKalender" :key="idx"
-              class="py-1.5 text-xs rounded-lg cursor-pointer transition-colors"
+              class="py-1.5 text-xs rounded-lg transition-colors"
               :class="{
                 'invisible': !day,
+                'cursor-pointer': day && !isDateDisabled(day),
+                'cursor-not-allowed opacity-30': day && isDateDisabled(day),
                 'bg-[#1A2342] text-white font-bold': day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni,
                 'bg-[#26A69A] text-white font-bold': day === hariDipilih && !(day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni),
-                'hover:bg-slate-100 text-slate-600': day && day !== hariIni && day !== hariDipilih
+                'hover:bg-slate-100 text-slate-600': day && !isDateDisabled(day) && day !== hariIni && day !== hariDipilih
               }"
               @click="day && pilihHari(day)"
             >

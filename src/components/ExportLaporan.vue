@@ -42,6 +42,7 @@ const handleExport = async () => {
   }
 
   isLoading.value = true;
+
   try {
     const params: {
       format: 'excel';
