@@ -159,6 +159,7 @@
               <td v-if="canManageKonseling" class="px-6 py-4 text-center">
                 <div class="flex items-center justify-center gap-2">
                   <button
+                    v-if="item.status !== 'SELESAI'"
                     @click="openEditModal(item)"
                     class="p-2 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
                     title="Edit"
@@ -168,6 +169,7 @@
                     </svg>
                   </button>
                   <button
+                    v-if="item.status !== 'SELESAI'"
                     @click="handleDeleteClick(item.id)"
                     class="p-2 rounded-lg text-red-400 hover:bg-red-50 transition-colors"
                     title="Hapus"
@@ -176,15 +178,18 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
+                  <span v-else class="text-xs text-slate-400 font-medium italic">Terkunci</span>
                 </div>
               </td>
               <td v-if="canManageKonseling" class="px-6 py-4 text-right">
                 <button
+                  v-if="item.status !== 'SELESAI'"
                   @click="goCatat(item.id)"
                   class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm whitespace-nowrap"
                 >
                   Catat Hasil
                 </button>
+                <span v-else class="text-[10px] bg-slate-100 text-slate-400 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Final</span>
               </td>
             </tr>
           </tbody>
