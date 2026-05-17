@@ -59,14 +59,44 @@ export const useKonselingStore = defineStore('konseling', () => {
 
   const allSiswa = ref<SiswaResponse[]>([])
   const searchQuery = ref('')
+  const historySearchQuery = ref('')
+  const selectedHistorySiswaData = ref<SiswaResponse | null>(null)
 
-  // Computed untuk filter search siswa aktif
+  // Computed untuk filter search siswa aktif (digunakan di modal create)
   const filteredSiswa = computed(() => {
     if (!searchQuery.value) return []
     const q = searchQuery.value.toLowerCase()
-    return allSiswa.value.filter(s =>
-      (s.nama?.toLowerCase().includes(q) || s.nisn?.includes(q)) &&
-      s.status?.toLowerCase() === 'aktif'
+    return allSiswa.value
+      .filter(s =>
+        (s.nama?.toLowerCase().includes(q) || s.nisn?.includes(q)) &&
+        s.status?.toLowerCase() === 'aktif'
+      )
+      .sort((a, b) => (a.nama || '').localeCompare(b.nama || ''))
+  })
+
+  // Computed untuk filter search siswa di tab riwayat (PK-04)
+  const filteredSiswaHistory = computed(() => {
+    const q = (historySearchQuery.value || '').toLowerCase()
+    let result = allSiswa.value.filter(s => s.status?.toLowerCase() === 'aktif')
+
+    if (q) {
+      result = result.filter(s =>
+        (s.nama?.toLowerCase().includes(q) || (s as any).namaLengkap?.toLowerCase().includes(q) || s.nisn?.includes(q))
+      )
+    }
+
+    return result
+      .sort((a, b) => (a.nama || '').localeCompare(b.nama || ''))
+      .slice(0, 5) // Tampilkan 5 data pertama agar identik dengan catat-keterlambatan
+  })
+
+  // Computed untuk data tabel riwayat yang sudah difilter secara lokal (Live Search)
+  const filteredRiwayatList = computed(() => {
+    if (!historySearchQuery.value) return riwayatList.value
+    const q = historySearchQuery.value.toLowerCase()
+    return riwayatList.value.filter(item =>
+      item.siswaNama?.toLowerCase().includes(q) ||
+      item.siswaNisn?.toLowerCase().includes(q)
     )
   })
 
@@ -82,6 +112,7 @@ export const useKonselingStore = defineStore('konseling', () => {
   }
 
   const fetchAllSiswa = async () => {
+    if (allSiswa.value.length > 0) return // Hindari fetch berulang jika sudah ada
     try {
       const res = await siswaService.getAll()
       allSiswa.value = Array.isArray(res) ? res : (res as any).data || []
@@ -99,6 +130,20 @@ export const useKonselingStore = defineStore('konseling', () => {
       totalLate: 0 // Default 0 karena bukan dari jalur peringatan absen
     }
     searchQuery.value = '' // bersihkan search bar setelah dipilih
+  }
+
+  const selectHistorySiswa = (siswa: SiswaResponse) => {
+    filterStudentId.value = siswa.id
+    selectedHistorySiswaData.value = siswa
+    historySearchQuery.value = ''
+    fetchRiwayatKonseling(siswa.id, filterStartDate.value, filterEndDate.value)
+  }
+
+  const clearHistoryFilter = () => {
+    filterStudentId.value = null
+    selectedHistorySiswaData.value = null
+    historySearchQuery.value = ''
+    fetchRiwayatKonseling(undefined, filterStartDate.value, filterEndDate.value)
   }
 
   const openCreateModal = (item?: SiswaWajibKonseling) => {
@@ -271,6 +316,10 @@ export const useKonselingStore = defineStore('konseling', () => {
     allSiswa,
     searchQuery,
     filteredSiswa,
+    historySearchQuery,
+    filteredSiswaHistory,
+    selectedHistorySiswaData,
+    filteredRiwayatList,
     pilihSiswaForm,
     showEditModal,
     editTarget,
@@ -291,5 +340,8 @@ export const useKonselingStore = defineStore('konseling', () => {
     removeKonseling,
     showToast,
     resetStore,
+    fetchAllSiswa,
+    selectHistorySiswa,
+    clearHistoryFilter,
   }
 })
