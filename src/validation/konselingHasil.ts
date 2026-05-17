@@ -12,7 +12,7 @@ export interface FieldErrors {
   status?: string
 }
 
-const ALLOWED: KonselingHasilStatusApi[] = ['selesai', 'perlu_monitoring']
+const ALLOWED: KonselingHasilStatusApi[] = ['pending', 'selesai']
 
 export function validateCatatHasilForm(form: CatatHasilFormState): { ok: true } | { ok: false; errors: FieldErrors } {
   const errors: FieldErrors = {}
@@ -38,7 +38,7 @@ export function validateCatatHasilForm(form: CatatHasilFormState): { ok: true } 
 export function mapDbStatusToFormStatus(db: string | null | undefined): KonselingHasilStatusApi | '' {
   if (!db) return ''
   const u = db.toUpperCase()
+  if (u === 'PENDING') return 'pending'
   if (u === 'SELESAI') return 'selesai'
-  if (u === 'PERLU_MONITORING') return 'perlu_monitoring'
   return ''
 }

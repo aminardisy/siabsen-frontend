@@ -46,6 +46,19 @@ export interface AttendanceStatsResponse {
   highestAlphaClasses: AttendanceStatsRankingItem[];
 }
 
+export interface AttendanceTrendData {
+  period: string;
+  totalHadir: number;
+  totalSakit: number;
+  totalIzin: number;
+  totalAlpha: number;
+}
+
+export interface AttendanceTrendResponse {
+  groupBy: 'weekly' | 'monthly';
+  data: AttendanceTrendData[];
+}
+
 export const reportService = {
   exportLaporan: async (params: {
     format: 'excel';
@@ -75,6 +88,16 @@ export const reportService = {
     grade_level?: string;
   }): Promise<{ success: boolean; message: string; data: AttendanceStatsResponse; errors: any }> => {
     const response = await api.get('/reports/attendance-stats', {
+      params
+    });
+    return response.data;
+  },
+  getAttendanceTrend: async (params: {
+    start_date?: string;
+    end_date?: string;
+    group_by: 'weekly' | 'monthly';
+  }): Promise<{ success: boolean; message: string; data: AttendanceTrendResponse; errors: any }> => {
+    const response = await api.get('/reports/attendance-trend', {
       params
     });
     return response.data;

@@ -1,14 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
+import HomeView from '@/views/DashboardView.vue'
 import { useAuthStore } from '@/stores/auth'
+import DashboardView from '@/views/DashboardView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'dashboard',
+      component: DashboardView,
       meta: { requiresAuth: true },
     },
     {
@@ -38,7 +39,7 @@ const router = createRouter({
       path: '/catat-keterlambatan',
       name: 'catat-keterlambatan',
       component: () => import('../views/CatatKeterlambatanView.vue'),
-      meta: { requiresAuth: true, role: ['GURU', 'ADMIN'] },
+      meta: { requiresAuth: true, role: ['GURU', 'ADMIN', 'PIKET'] },
     },
     {
       path: '/accounts',
@@ -111,11 +112,17 @@ const router = createRouter({
       component: () => import('@/views/AttendanceStatsView.vue'),
       meta: { requiresAuth: true },
     },
-      {
+    {
       path: '/konseling',
       name: 'konseling',
       component: () => import('@/views/KonselingView.vue'),
-      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'KESISWAAN', 'WALI_KELAS'] },
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'KESISWAAN'] },
+    },
+    {
+      path: '/konseling/:id/hasil',
+      name: 'catat-hasil-konseling',
+      component: () => import('@/views/CatatHasilKonselingView.vue'),
+      meta: { requiresAuth: true, role: ['KESISWAAN', 'ADMIN'] },
     },
   ],
 })
@@ -130,7 +137,7 @@ router.beforeEach((to, from, next) => {
     next('/login')
   } else if (to.meta.role) {
     const allowedRoles = Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role]
-    if (allowedRoles.includes(userRole)) {
+    if (userRole === 'ADMIN' || allowedRoles.includes(userRole)) {
       next()
     } else {
       alert('Maaf, Anda tidak memiliki akses ke halaman ini!')

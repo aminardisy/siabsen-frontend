@@ -14,7 +14,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const { error } = useNotification();
 
-const allowedRoles = ['GURU', 'KESISWAAN'];
+const allowedRoles = ['GURU', 'KESISWAAN', 'ADMIN'];
 const canViewChart = allowedRoles.includes(authStore.getUserRole || '');
 
 const startDate = ref('');

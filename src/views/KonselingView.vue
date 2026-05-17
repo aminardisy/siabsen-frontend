@@ -15,10 +15,9 @@
         />
       </div>
       <button
+        v-if="canManageKonseling"
         @click="openCreateModal()"
-        :disabled="!canManageKonseling"
-        :class="canManageKonseling ? 'bg-[#1A2342] hover:bg-[#2e3b66]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
-        class="px-5 py-3 rounded-xl text-sm font-bold text-white shadow-md transition-all flex items-center gap-2"
+        class="px-5 py-3 rounded-xl text-sm font-bold text-white shadow-md transition-all flex items-center gap-2 bg-[#1A2342] hover:bg-[#2e3b66]"
       >
         <span>+</span> Buat Konseling Mandiri
       </button>
@@ -61,7 +60,7 @@
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">NISN</th>
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Kelas</th>
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Total Terlambat</th>
-              <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
+              <th v-if="canManageKonseling" class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -76,14 +75,10 @@
                   {{ item.totalLate }}x
                 </span>
               </td>
-              <td class="px-6 py-4 text-center">
+              <td v-if="canManageKonseling" class="px-6 py-4 text-center">
                 <button
                   @click="openCreateModal(item)"
-                  :disabled="!canManageKonseling"
-                  :class="canManageKonseling
-                    ? 'bg-[#26A69A] hover:bg-[#1f8a7f] text-white'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
-                  class="px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm"
+                  class="px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm bg-[#26A69A] hover:bg-[#1f8a7f] text-white"
                 >
                   Buat Jadwal
                 </button>
@@ -143,7 +138,8 @@
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Topik</th>
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Jenis Pelanggaran</th>
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Status</th>
-              <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
+              <th v-if="canManageKonseling" class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
+              <th v-if="canManageKonseling" class="px-6 py-4"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -160,13 +156,11 @@
                   {{ statusLabel(item.status) }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-center">
+              <td v-if="canManageKonseling" class="px-6 py-4 text-center">
                 <div class="flex items-center justify-center gap-2">
                   <button
                     @click="openEditModal(item)"
-                    :disabled="!canManageKonseling"
-                    :class="canManageKonseling ? 'text-blue-500 hover:bg-blue-50' : 'text-slate-300 cursor-not-allowed'"
-                    class="p-2 rounded-lg transition-colors"
+                    class="p-2 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
                     title="Edit"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24 " stroke="currentColor">
@@ -175,9 +169,7 @@
                   </button>
                   <button
                     @click="handleDeleteClick(item.id)"
-                    :disabled="!canManageKonseling"
-                    :class="canManageKonseling ? 'text-red-400 hover:bg-red-50' : 'text-slate-300 cursor-not-allowed'"
-                    class="p-2 rounded-lg transition-colors"
+                    class="p-2 rounded-lg text-red-400 hover:bg-red-50 transition-colors"
                     title="Hapus"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,6 +177,14 @@
                     </svg>
                   </button>
                 </div>
+              </td>
+              <td v-if="canManageKonseling" class="px-6 py-4 text-right">
+                <button
+                  @click="goCatat(item.id)"
+                  class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm whitespace-nowrap"
+                >
+                  Catat Hasil
+                </button>
               </td>
             </tr>
           </tbody>
@@ -396,6 +396,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useKonselingStore } from '@/stores/konseling'
 
@@ -405,6 +406,8 @@ const tabs = [
   { key: 'riwayat', label: 'Riwayat Konseling' },
 ]
 const activeTab = ref('wajib')
+
+const router = useRouter()
 
 // ── Inisialisasi Pinia Store ──
 const konselingStore = useKonselingStore()
@@ -463,6 +466,10 @@ const handleDeleteClick = (id: number) => {
   if (confirm('Hapus jadwal konseling ini? Data akan masuk ke sistem soft delete.')) {
     removeKonseling(id)
   }
+}
+
+const goCatat = (id: number) => {
+  router.push({ name: 'catat-hasil-konseling', params: { id: String(id) } })
 }
 
 // ── Visual Helpers (Lokal) ──

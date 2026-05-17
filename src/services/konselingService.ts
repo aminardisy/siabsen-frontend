@@ -7,6 +7,10 @@ import type {
   KonselingDetail,
   CreateKonselingPayload,
   UpdateKonselingPayload,
+  CatatHasilKonselingRequest,
+  CatatHasilKonselingResponse,
+  KonselingDetailResponse,
+  RiwayatKonseling as RiwayatKonselingItem
 } from '@/models/konseling'
 
 // PK-01: Daftar siswa wajib konseling
@@ -55,4 +59,27 @@ export const updateKonseling = async (
 // PK-06: Hapus jadwal konseling (soft delete)
 export const deleteKonseling = async (id: number): Promise<void> => {
   await api.delete(`/konseling/${id}`)
+}
+
+/** Catat hasil konseling — hanya kesiswaan */
+export const catatHasilKonseling = async (
+  id: number,
+  payload: CatatHasilKonselingRequest
+): Promise<CatatHasilKonselingResponse> => {
+  const res = await api.put(`/konseling/${id}/hasil`, payload)
+  return res.data
+}
+
+/** Detail konseling untuk prefill form hasil (akses kesiswaan) */
+export const getKonselingDetailForKesiswaan = async (
+  id: number
+): Promise<KonselingDetailResponse> => {
+  const res = await api.get(`/konseling/kesiswaan/${id}`)
+  return res.data.data
+}
+
+/** List jadwal konseling status PENDING untuk kesiswaan login */
+export const listMenungguHasilForKesiswaan = async (): Promise<RiwayatKonselingItem[]> => {
+  const res = await api.get('/konseling/kesiswaan/menunggu')
+  return res.data.data || []
 }

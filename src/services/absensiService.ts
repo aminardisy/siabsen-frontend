@@ -85,5 +85,11 @@ export const absensiService = {
       params: { startDate, endDate }
     })
     return response.data
+  },
+  getDetailKelasHarian: async (kelasId: number, tanggal: string) => {
+    const response = await api.get(`/absensi/kelas/${kelasId}/harian`, {
+      params: { tanggal }
+    })
+    return response.data.data
   }
 }

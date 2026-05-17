@@ -54,7 +54,7 @@ export const useKonselingStore = defineStore('konseling', () => {
   // Menghindari circular dependency dengan memanggil useAuthStore di dalam scope getter
   const canManageKonseling = computed(() => {
     const authStore = useAuthStore()
-    return authStore.user?.role === 'KESISWAAN'
+    return ['KESISWAAN', 'ADMIN'].includes(authStore.user?.role || '')
   })
 
   const allSiswa = ref<SiswaResponse[]>([])
