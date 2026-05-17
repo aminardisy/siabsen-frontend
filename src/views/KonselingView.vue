@@ -94,19 +94,61 @@
         <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-bold text-[#1A2342]">Riwayat Konseling</h2>
-            <span class="text-xs text-gray-400">{{ riwayatList.length }} data</span>
+            <span class="text-xs text-gray-400">{{ filteredRiwayatList.length }} data</span>
           </div>
 
           <div class="flex flex-wrap items-end gap-3 bg-white p-3 rounded-xl border border-slate-200">
-            <div class="flex-1 min-w-[150px]">
-              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Filter Siswa ID</label>
-              <input
-                type="number"
-                v-model.number="filterStudentId"
-                placeholder="ID Siswa (kosongkan = semua)"
-                class="w-full text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]"
-              />
+            <!-- Filter Siswa (Joined in one row) -->
+            <div class="flex-1 min-w-[300px] relative">
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cari nama siswa</label>
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  v-model="historySearchQuery"
+                  type="text"
+                  @focus="handleHistorySearchFocus"
+                  @blur="handleHistorySearchBlur"
+                  placeholder="Ketik nama atau NISN siswa..."
+                  class="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition"
+                />
+                <button
+                  v-if="historySearchQuery"
+                  @click="historySearchQuery = ''"
+                  type="button"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <!-- Dropdown Riwayat -->
+              <div v-if="isHistorySearchFocused && filteredSiswaHistory.length > 0" class="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg">
+                <div
+                  v-for="siswa in filteredSiswaHistory"
+                  :key="siswa.id"
+                  @mousedown="handleSelectHistorySiswa(siswa)"
+                  class="flex items-center justify-between px-4 py-3 hover:bg-teal-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors"
+                >
+                  <div>
+                    <p class="text-sm font-semibold text-[#1A2342]">{{ siswa.nama }}</p>
+                    <p class="text-xs text-gray-400 font-mono">{{ siswa.nisn }}</p>
+                  </div>
+                  <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-lg font-medium">{{ siswa.namaKelas }}</span>
+                </div>
+              </div>
+
+              <!-- Selected Student Badge -->
+              <div v-if="selectedHistorySiswaData" class="mt-2 flex items-center justify-between bg-teal-50 border border-teal-200 rounded-xl px-4 py-2 animate-in fade-in slide-in-from-top-1">
+                <div>
+                  <p class="text-sm font-bold text-[#1A2342]">{{ selectedHistorySiswaData.nama }}</p>
+                  <p class="text-xs text-gray-500 font-mono">{{ selectedHistorySiswaData.nisn }} · {{ selectedHistorySiswaData.namaKelas }}</p>
+                </div>
+                <button @click="clearHistoryFilter" class="text-xs text-red-400 hover:text-red-600 font-bold uppercase tracking-wider">Ganti</button>
+              </div>
             </div>
+
             <div>
               <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dari</label>
               <input type="date" v-model="filterStartDate" class="text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]" />
@@ -125,9 +167,9 @@
           Memuat data...
         </div>
 
-        <div v-else-if="!hasRiwayatData" class="p-12 text-center text-gray-400 text-sm">
+        <div v-else-if="filteredRiwayatList.length === 0" class="p-12 text-center text-gray-400 text-sm">
           <div class="mb-2 text-3xl">📋</div>
-          Belum ada riwayat konseling
+          Tidak ada data riwayat yang sesuai
         </div>
 
         <table v-else class="w-full text-left">
@@ -143,7 +185,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="item in riwayatList" :key="item.id" class="hover:bg-slate-50/80 transition-colors">
+            <tr v-for="item in filteredRiwayatList" :key="item.id" class="hover:bg-slate-50/80 transition-colors">
               <td class="px-6 py-4">
                 <p class="font-semibold text-slate-700 text-sm">{{ item.siswaNama }}</p>
                 <p class="text-xs text-gray-400 font-mono">{{ item.siswaNisn }}</p>
@@ -442,6 +484,10 @@ const {
   canManageKonseling,
   searchQuery,
   filteredSiswa,
+  historySearchQuery,
+  filteredSiswaHistory,
+  selectedHistorySiswaData,
+  filteredRiwayatList,
 } = storeToRefs(konselingStore)
 
 // Memanggil Action/Method terpusat dari Pinia Store
@@ -456,7 +502,29 @@ const {
   submitEdit,
   removeKonseling,
   pilihSiswaForm,
+  fetchAllSiswa,
+  selectHistorySiswa,
+  clearHistoryFilter,
 } = konselingStore
+
+// ── Search History Local State ──
+const isHistorySearchFocused = ref(false)
+
+const handleHistorySearchFocus = () => {
+  fetchAllSiswa()
+  isHistorySearchFocused.value = true
+}
+
+const handleHistorySearchBlur = () => {
+  setTimeout(() => {
+    isHistorySearchFocused.value = false
+  }, 200)
+}
+
+const handleSelectHistorySiswa = (siswa: any) => {
+  selectHistorySiswa(siswa)
+  isHistorySearchFocused.value = false
+}
 
 // ── Action Handlers ──
 const handleFilterRiwayat = () => {

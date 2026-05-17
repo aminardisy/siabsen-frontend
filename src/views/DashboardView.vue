@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import { dashboardService, type DashboardResponse } from '@/services/dashboardService'
 import GrafikKehadiranKelas from '@/components/GrafikKehadiranKelas.vue'
 import GrafikTrenKehadiran from '@/components/GrafikTrenKehadiran.vue'
+
+const authStore = useAuthStore()
+const userRole = computed(() => authStore.getUserRole)
 
 const isLoading = ref(false)
 const errorMsg = ref<string | null>(null)
@@ -288,7 +292,7 @@ onMounted(() => {
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div class="flex border-b border-slate-200 bg-slate-50/50">
+          <div v-if="userRole !== 'GURU'" class="flex border-b border-slate-200 bg-slate-50/50">
             <button
               @click="activeChartTab = 'kelas'"
               :class="[
@@ -301,6 +305,7 @@ onMounted(() => {
               Kehadiran per Kelas
             </button>
             <button
+              v-if="userRole !== 'GURU'"
               @click="activeChartTab = 'tren'"
               :class="[
                 'flex-1 px-4 py-3 text-sm font-semibold transition',
@@ -318,7 +323,7 @@ onMounted(() => {
               <GrafikKehadiranKelas />
             </div>
             
-            <div v-show="activeChartTab === 'tren'" class="w-full">
+            <div v-show="activeChartTab === 'tren' && userRole !== 'GURU'" class="w-full">
               <GrafikTrenKehadiran />
             </div>
           </div>
