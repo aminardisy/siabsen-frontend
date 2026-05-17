@@ -52,7 +52,7 @@ const handleExport = async () => {
     const response = await reportService.exportLaporan(params);
 
     const blob = new Blob([response.data], {
-      type: response.headers['content-type'],
+      type: response.headers['content-type'] as string,
     });
 
     const url = window.URL.createObjectURL(blob);
@@ -60,7 +60,10 @@ const handleExport = async () => {
 
     link.href = url;
 
-    const contentDisposition = response.headers['content-disposition'];
+    // FIX: Mengonversi AxiosHeaderValue menjadi string/undefined agar lolos dari strict type-check Vercel
+    const contentDisposition = response.headers['content-disposition']
+      ? String(response.headers['content-disposition'])
+      : undefined;
 
     let filename = 'laporan-kehadiran.xlsx';
 
@@ -68,7 +71,7 @@ const handleExport = async () => {
       const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
 
       if (filenameMatch && filenameMatch.length > 1) {
-        filename = filenameMatch[1];
+        filename = filenameMatch[1] ?? filename;
       }
     }
 
