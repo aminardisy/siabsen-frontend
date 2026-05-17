@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/DashboardView.vue'
 import { useAuthStore } from '@/stores/auth'
+import LandingView from '@/views/LandingView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 
 const router = createRouter({
@@ -8,9 +9,14 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'landing',
+      component: LandingView
+    },
+    {
+      path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, role: ['ADMIN', 'GURU', 'KESISWAAN'] },
     },
     {
       path: '/login',
