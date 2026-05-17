@@ -148,33 +148,48 @@ onMounted(fetchData)
 
 <template>
   <div class="p-8 w-full min-h-screen bg-gray-50 font-inter text-left">
-    <div class="flex justify-between items-end mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4 text-left">
       <div>
         <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Guru & Staf</h1>
-        <p class="text-gray-500">Kelola data tenaga pengajar dan wali kelas sekolah</p>
+        <p class="text-gray-500 text-sm">Kelola data tenaga pengajar dan wali kelas sekolah</p>
       </div>
-      <div class="flex items-center gap-4">
-        <BaseSearch v-model="searchQuery" placeholder="Cari NUPTK atau Nama..." />
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+        <BaseSearch v-model="searchQuery" placeholder="Cari NUPTK atau Nama..." class="w-full sm:w-64 h-11" />
 
         <input type="file" ref="fileInputGuru" class="hidden" accept=".xlsx, .xls" @change="handleImportGuru" />
 
-        <button
-          @click="fileInputGuru?.click()"
-          type="button"
-          class="border border-slate-200 bg-white hover:bg-slate-50 text-[#1A2342] px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Import Excel
-        </button>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <a
+            href="/templates/Template_Import_Guru.xlsx"
+            download="Template_Import_Guru.xlsx"
+            class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 h-11 px-4 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-sm transition-all shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Template
+          </a>
 
-        <button
-          @click="openModal('add')"
-          class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-teal-100 transition-all"
-        >
-          + Tambah Guru
-        </button>
+          <button
+            @click="fileInputGuru?.click()"
+            type="button"
+            class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 h-11 px-4 border border-slate-200 bg-white hover:bg-slate-50 text-[#1A2342] rounded-xl font-bold text-sm transition-all shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Import
+          </button>
+
+          <button
+            @click="openModal('add')"
+            type="button"
+            class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 h-11 px-5 bg-[#26A69A] hover:bg-[#1f8a7f] text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-teal-100/50 whitespace-nowrap"
+          >
+            <span>+</span> Guru
+          </button>
+        </div>
       </div>
     </div>
 
