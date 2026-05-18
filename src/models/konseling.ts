@@ -8,6 +8,7 @@ export interface SiswaWajibKonseling {
   name: string
   kelas: string
   totalLate: number
+  totalAlpha: number 
 }
 
 export interface RiwayatKonseling {

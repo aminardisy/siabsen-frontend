@@ -147,20 +147,30 @@ export const useKonselingStore = defineStore('konseling', () => {
   }
 
   const openCreateModal = (item?: SiswaWajibKonseling) => {
-    fetchAllSiswa() // tarik data siswa buat jaga-jaga kalau buat mandiri
+    fetchAllSiswa()
     searchQuery.value = ''
-
+  
     if (item) {
-      // Jika diklik dari tabel Wajib Konseling (PK-01)
       createTarget.value = item
+  
+      const isAlpha = item.totalAlpha >= 3 && item.totalAlpha >= item.totalLate
+      const isBoth = item.totalLate >= 3 && item.totalAlpha >= 3
+  
       createForm.value = {
         date: new Date().toISOString().slice(0, 10),
-        topic: 'Keterlambatan berulang',
-        violationType: 'TERLAMBAT',
-        initialNotes: `Siswa telah mencapai batas ambang keterlambatan sebanyak ${item.totalLate} kali bulan ini.`,
+        topic: isBoth
+          ? 'Keterlambatan & Alpha berulang'
+          : isAlpha
+            ? 'Alpha berulang'
+            : 'Keterlambatan berulang',
+        violationType: isBoth ? 'TERLAMBAT, ALPHA' : isAlpha ? 'ALPHA' : 'TERLAMBAT',
+        initialNotes: isBoth
+          ? `Siswa terlambat ${item.totalLate}x dan alpha ${item.totalAlpha}x bulan ini.`
+          : isAlpha
+            ? `Siswa alpha ${item.totalAlpha}x bulan ini.`
+            : `Siswa terlambat ${item.totalLate}x bulan ini.`,
       }
     } else {
-      // Jika diklik dari tombol "Buat Jadwal Mandiri"
       createTarget.value = null
       createForm.value = {
         date: new Date().toISOString().slice(0, 10),
