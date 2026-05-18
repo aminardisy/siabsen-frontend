@@ -1,3 +1,154 @@
+<template>
+  <div class="p-8 w-full min-h-screen bg-gray-50 font-inter text-left">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4 text-left">
+      <div>
+        <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Akun Pengguna</h1>
+        <p class="text-gray-500 text-sm">Kelola akses staff, guru, dan admin sistem</p>
+      </div>
+      <button
+        @click="openModal('add')"
+        class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 h-11 rounded-xl font-bold shadow-md shadow-teal-100/50 flex items-center gap-2 transition-all text-sm w-full sm:w-auto justify-center"
+      >
+        <span>+</span> Tambah Akun
+      </button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <table class="w-full border-collapse">
+        <thead class="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+          <tr>
+            <th class="px-6 py-4">Nama Lengkap</th>
+            <th class="px-6 py-4">Email</th>
+            <th class="px-6 py-4">Role</th>
+            <th class="px-6 py-4 text-center">Status</th>
+            <th class="px-6 py-4 text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <tr v-for="acc in accounts" :key="acc.id" class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ acc.nama }}</td>
+            <td class="px-6 py-4 text-sm text-gray-500">{{ acc.email }}</td>
+            <td class="px-6 py-4">
+              <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+                {{ acc.role }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span :class="acc.status === 'Aktif' ? 'bg-teal-50 text-[#26A69A]' : 'bg-red-50 text-red-500'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase">
+                {{ acc.status }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex justify-center gap-4">
+                <button @click="openModal('edit', acc)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button @click="triggerDeleteAccount(acc.id, acc.nama)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Nonaktifkan">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all text-left animate-in fade-in zoom-in-95 duration-200">
+        <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
+          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Buat Akun Baru' : 'Edit Akun' }}</h3>
+          <button @click="isModalOpen = false" class="p-1 hover:bg-white/10 rounded-lg transition-colors group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="p-8 space-y-4">
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Role Akses</label>
+            <select v-model="formAccount.role" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] cursor-pointer" required>
+              <option v-for="role in roleOptions" :key="role.value" :value="role.value">{{ role.label }}</option>
+            </select>
+          </div>
+
+          <div v-if="['GURU', 'PIKET'].includes(formAccount.role)" class="space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Sambungkan ke Data Guru</label>
+            <select v-model="formAccount.guruId" class="w-full bg-blue-50/50 border border-blue-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer" required>
+              <option :value="null" disabled>-- Pilih Guru --</option>
+              <option v-for="g in daftarGuru" :key="g.id" :value="g.id">{{ g.nama }} ({{ g.jabatan }})</option>
+            </select>
+          </div>
+
+          <div v-if="formAccount.role === 'SEKRETARIS'" class="space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Sambungkan ke Data Siswa</label>
+            <select v-model="formAccount.siswaId" class="w-full bg-purple-50/50 border border-purple-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer" required>
+              <option :value="null" disabled>-- Pilih Siswa --</option>
+              <option v-for="s in daftarSiswa" :key="s.id" :value="s.id">{{ s.nama }} - {{ s.namaKelas }}</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nama Tampilan Akun</label>
+            <input v-model="formAccount.nama" type="text" placeholder="Nama yang muncul saat login" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Email Address</label>
+            <input v-model="formAccount.email" type="email" placeholder="email@sekolah.sch.id" :class="['w-full bg-gray-50 border p-3 rounded-xl outline-none focus:ring-2 transition-all', isEmailInvalid ? 'border-red-400 focus:ring-red-100' : 'border-gray-100 focus:ring-[#26A69A]']" required />
+
+            <p v-if="isEmailInvalid" class="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Format alamat email sekolah tidak valid.
+            </p>
+          </div>
+
+          <div v-if="modalMode === 'add'" class="space-y-1">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Password</label>
+            <input v-model="formAccount.password" type="password" placeholder="Minimal 6 karakter" :class="['w-full bg-gray-50 border p-3 rounded-xl outline-none focus:ring-2 transition-all', isPasswordShort ? 'border-red-400 focus:ring-red-100' : 'border-gray-100 focus:ring-[#26A69A]']" required />
+
+            <p v-if="isPasswordShort" class="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Kata sandi terlalu pendek (Minimal 6 karakter).
+            </p>
+          </div>
+
+          <div class="flex gap-4 pt-6">
+            <button type="button" @click="isModalOpen = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all">Batal</button>
+            <button
+              type="submit"
+              :disabled="!isFormValid"
+              :class="['flex-1 py-3 text-white rounded-xl font-bold shadow-xl transition-all', isFormValid ? 'bg-[#1A2342] hover:bg-slate-800' : 'bg-gray-300 cursor-not-allowed']"
+            >
+              Simpan Akun
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <ConfirmationModal
+      :show="isDeleteModalOpen"
+      title="Nonaktifkan Hak Akses Akun"
+      :message="`Apakah Anda yakin ingin menonaktifkan akun milik ${selectedAccountName}? Pengguna tersebut tidak akan bisa melakukan login ke sistem SiAbsen lagi.`"
+      confirm-text="Nonaktifkan Akses"
+      cancel-text="Batal"
+      variant="danger"
+      @close="isDeleteModalOpen = false"
+      @confirm="submitDeleteAccount"
+    />
+
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { toast } from 'vue-sonner'
@@ -5,6 +156,8 @@ import { accountService } from '@/services/accountService'
 import { guruService } from '@/services/guruService'
 import { siswaService } from '@/services/siswaService'
 import type { AccountResponseDTO } from '@/models/account'
+import BaseSearch from '@/components/layout/BaseSearch.vue'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // FIX: Impor modal konfirmasi global
 
 // 1. State Management
 const accounts = ref<AccountResponseDTO[]>([])
@@ -12,6 +165,11 @@ const daftarGuru = ref<any[]>([])
 const daftarSiswa = ref<any[]>([])
 const isModalOpen = ref(false)
 const modalMode = ref<'add' | 'edit'>('add')
+
+// FIX: State Tambahan Pengendali Alur Modal Konfirmasi Hapus/Deaktivasi Akun
+const isDeleteModalOpen = ref(false)
+const selectedAccountId = ref('')
+const selectedAccountName = ref('')
 
 const roleOptions = [
   { value: 'ADMIN', label: 'Admin Sistem' },
@@ -42,7 +200,6 @@ const isFormValid = computed(() => {
                      emailRegex.test(formAccount.value.email) &&
                      formAccount.value.role !== ''
 
-  // Validasi tambahan: Jika role butuh relasi, ID harus terisi
   const needsGuru = ['GURU', 'PIKET'].includes(formAccount.value.role)
   const needsSiswa = formAccount.value.role === 'SEKRETARIS'
 
@@ -58,7 +215,6 @@ const isFormValid = computed(() => {
 // 3. API Logic
 const fetchData = async () => {
   try {
-    // Ambil semua data secara paralel agar cepat
     const [accs, gurs, sisw] = await Promise.all([
       accountService.getAll(),
       guruService.getAll(),
@@ -98,15 +254,25 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = async (id: string, nama: string) => {
-  if (confirm(`Nonaktifkan akun ${nama}? Akun ini tidak akan bisa login lagi.`)) {
-    try {
-      await accountService.delete(id)
-      toast.success('Akun dinonaktifkan')
-      fetchData()
-    } catch (error) {
-      toast.error('Gagal menghapus akun')
-    }
+// FIX: Fungsi baru menyimpan state target sebelum memunculkan modal bahaya merah
+const triggerDeleteAccount = (id: string, nama: string) => {
+  selectedAccountId.value = id
+  selectedAccountName.value = nama
+  isDeleteModalOpen.value = true
+}
+
+// FIX: Eksekusi final penonaktifan akun pengguna ke server backend Railway
+const submitDeleteAccount = async () => {
+  if (!selectedAccountId.value) return
+  try {
+    await accountService.delete(selectedAccountId.value)
+    toast.success('Akun berhasil dinonaktifkan')
+    isDeleteModalOpen.value = false
+    fetchData()
+  } catch (error) {
+    toast.error('Gagal menonaktifkan akun')
+  } finally {
+    selectedAccountId.value = ''
   }
 }
 
@@ -132,123 +298,8 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
 onMounted(fetchData)
 </script>
 
-<template>
-  <div class="p-8 w-full min-h-screen bg-gray-50 font-inter text-left">
-    <div class="flex justify-between items-end mb-8">
-      <div>
-        <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Akun Pengguna</h1>
-        <p class="text-gray-500">Kelola akses staff, guru, dan admin sistem</p>
-      </div>
-      <button
-        @click="openModal('add')"
-        class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-teal-100 flex items-center gap-2 transition-all"
-      >
-        <span>+</span> Tambah Akun
-      </button>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <table class="w-full border-collapse">
-        <thead class="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
-          <tr>
-            <th class="px-6 py-4">Nama Lengkap</th>
-            <th class="px-6 py-4">Email</th>
-            <th class="px-6 py-4">Role</th>
-            <th class="px-6 py-4 text-center">Status</th>
-            <th class="px-6 py-4 text-center">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-50">
-          <tr v-for="acc in accounts" :key="acc.id" class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ acc.nama }}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">{{ acc.email }}</td>
-            <td class="px-6 py-4">
-              <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                {{ acc.role }}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-center">
-              <span :class="acc.status === 'Aktif' ? 'bg-teal-50 text-[#26A69A]' : 'bg-red-50 text-red-500'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase">
-                {{ acc.status }}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-center">
-              <div class="flex justify-center gap-4">
-                <button @click="openModal('edit', acc)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button @click="handleDelete(acc.id, acc.nama)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all text-left">
-        <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
-          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Buat Akun Baru' : 'Edit Akun' }}</h3>
-          <button @click="isModalOpen = false" class="text-2xl">✕</button>
-        </div>
-
-        <form @submit.prevent="handleSubmit" class="p-8 space-y-4">
-          <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Role Akses</label>
-            <select v-model="formAccount.role" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required>
-              <option v-for="role in roleOptions" :key="role.value" :value="role.value">{{ role.label }}</option>
-            </select>
-          </div>
-
-          <div v-if="['GURU', 'PIKET'].includes(formAccount.role)" class="space-y-1 animate-in fade-in slide-in-from-top-2">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Sambungkan ke Data Guru</label>
-            <select v-model="formAccount.guruId" class="w-full bg-blue-50/50 border border-blue-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-400" required>
-              <option :value="null" disabled>-- Pilih Guru --</option>
-              <option v-for="g in daftarGuru" :key="g.id" :value="g.id">{{ g.nama }} ({{ g.jabatan }})</option>
-            </select>
-          </div>
-
-          <div v-if="formAccount.role === 'SEKRETARIS'" class="space-y-1 animate-in fade-in slide-in-from-top-2">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Sambungkan ke Data Siswa</label>
-            <select v-model="formAccount.siswaId" class="w-full bg-purple-50/50 border border-purple-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-purple-400" required>
-              <option :value="null" disabled>-- Pilih Siswa --</option>
-              <option v-for="s in daftarSiswa" :key="s.id" :value="s.id">{{ s.nama }} - {{ s.namaKelas }}</option>
-            </select>
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nama Tampilan Akun</label>
-            <input v-model="formAccount.nama" type="text" placeholder="Nama yang muncul saat login" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A]" required />
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Email Address</label>
-            <input v-model="formAccount.email" type="email" placeholder="email@sekolah.sch.id" :class="['w-full bg-gray-50 border p-3 rounded-xl outline-none focus:ring-2 transition-all', isEmailInvalid ? 'border-red-400 focus:ring-red-100' : 'border-gray-100 focus:ring-[#26A69A]']" required />
-          </div>
-
-          <div v-if="modalMode === 'add'" class="space-y-1">
-            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Password</label>
-            <input v-model="formAccount.password" type="password" placeholder="Minimal 6 karakter" :class="['w-full bg-gray-50 border p-3 rounded-xl outline-none focus:ring-2 transition-all', isPasswordShort ? 'border-red-400 focus:ring-red-100' : 'border-gray-100 focus:ring-[#26A69A]']" required />
-          </div>
-
-          <div class="flex gap-4 pt-6">
-            <button type="button" @click="isModalOpen = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all">Batal</button>
-            <button
-              type="submit"
-              :disabled="!isFormValid"
-              :class="['flex-1 py-3 text-white rounded-xl font-bold shadow-xl transition-all', isFormValid ? 'bg-[#1A2342] hover:bg-slate-800' : 'bg-gray-300 cursor-not-allowed']"
-            >
-              Simpan Akun
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</template>
+<style scoped>
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+</style>

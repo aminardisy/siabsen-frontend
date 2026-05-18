@@ -127,7 +127,8 @@ export const useKonselingStore = defineStore('konseling', () => {
       name: siswa.nama,
       nisn: siswa.nisn,
       kelas: siswa.namaKelas,
-      totalLate: 0 // Default 0 karena bukan dari jalur peringatan absen
+      totalLate: 0,
+      totalAlpha: 0 // Default 0 karena bukan dari jalur peringatan absen
     }
     searchQuery.value = '' // bersihkan search bar setelah dipilih
   }
@@ -149,13 +150,13 @@ export const useKonselingStore = defineStore('konseling', () => {
   const openCreateModal = (item?: SiswaWajibKonseling) => {
     fetchAllSiswa()
     searchQuery.value = ''
-  
+
     if (item) {
       createTarget.value = item
-  
+
       const isAlpha = item.totalAlpha >= 3 && item.totalAlpha >= item.totalLate
       const isBoth = item.totalLate >= 3 && item.totalAlpha >= 3
-  
+
       createForm.value = {
         date: new Date().toISOString().slice(0, 10),
         topic: isBoth
