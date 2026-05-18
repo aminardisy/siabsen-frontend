@@ -133,7 +133,7 @@ const router = createRouter({
     {
       path: '/workspace',
       name: 'workspace',
-      component: () => import('@/views/WorkSpaceView.vue'),
+      component: () => import('@/views/WorkspaceView.vue'),
       meta: { requiresAuth: true, allowedRoles: ['SEKRETARIS', 'PIKET'] }
     },
   ],

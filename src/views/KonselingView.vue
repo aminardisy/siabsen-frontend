@@ -329,7 +329,7 @@
                 <p class="text-sm font-black text-[#1A2342]">{{ createTarget?.name }}</p>
                 <p class="text-xs text-slate-500 font-mono mt-0.5">{{ createTarget?.nisn }} · {{ createTarget?.kelas }}</p>
               </div>
-              <button v-if="createTarget.totalLate === 0" type="button" @click="createTarget = null" class="text-xs text-red-500 hover:text-red-700 font-bold uppercase tracking-wider transition-colors">Ganti</button>
+              <button v-if="createTarget?.totalLate === 0" type="button" @click="createTarget = null" class="text-xs text-red-500 hover:text-red-700 font-bold uppercase tracking-wider transition-colors">Ganti</button>
             </div>
           </div>
 
@@ -517,21 +517,21 @@ const currentPickerYear = ref(new Date().getFullYear())
 watch(selectedMonth, (newVal) => {
   if (newVal) {
     const [year] = newVal.split('-')
-    currentPickerYear.value = parseInt(year, 10)
+    currentPickerYear.value = parseInt(year!, 10)
   }
 }, { immediate: true })
 
 const formatSelectedMonthLabel = computed(() => {
   if (!selectedMonth.value) return 'Pilih Periode'
   const [year, month] = selectedMonth.value.split('-')
-  const monthIdx = parseInt(month, 10) - 1
+  const monthIdx = parseInt(month!, 10) - 1
   return `${monthNamesFull[monthIdx]} ${year}`
 })
 
 const isCurrentSelected = (monthIndex: number) => {
   if (!selectedMonth.value) return false
   const [year, month] = selectedMonth.value.split('-')
-  return currentPickerYear.value === parseInt(year, 10) && (monthIndex + 1) === parseInt(month, 10)
+  return currentPickerYear.value === parseInt(year!, 10) && (monthIndex + 1) === parseInt(month!, 10)
 }
 
 const selectMonthAndYear = (monthIndex: number) => {
