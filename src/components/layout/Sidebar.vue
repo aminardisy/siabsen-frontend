@@ -6,25 +6,33 @@
     ]"
   >
     <div
-      class="relative bg-[#26A69A] flex flex-col items-center justify-center rounded-b-[2rem] shadow-lg mb-8 transition-all duration-300"
-      :class="uiStore.isSidebarCollapsed ? 'p-6 h-20' : 'p-8'"
+    class="relative bg-[#26A69A] flex flex-col items-center justify-center rounded-b-[2rem] shadow-lg mb-8 transition-all duration-300"
+    :class="uiStore.isSidebarCollapsed ? 'p-6 h-20' : 'p-8'"
+  >
+    <button
+      @click="uiStore.toggleSidebar()"
+      class="transition-all duration-300 hover:scale-110 text-white"
+      :class="uiStore.isSidebarCollapsed ? 'relative' : 'absolute top-5 right-5'"
     >
-      <button
-        @click="uiStore.toggleSidebar()"
-        class="transition-all duration-300 hover:scale-110 text-white"
-        :class="uiStore.isSidebarCollapsed ? 'relative' : 'absolute top-5 right-5'"
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-8 h-8"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="1.5"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
 
-      <img
-        v-if="!uiStore.isSidebarCollapsed"
-        src="@/assets/SIABSEN (2).png"
-        alt="SiAbsen Logo"
-        class="h-24 w-auto drop-shadow-md mt-4 transition-all duration-300"
-      />
+    <img
+      v-if="!uiStore.isSidebarCollapsed"
+      src="@/assets/SIABSEN (2).png"
+      alt="SiAbsen Logo"
+      class="h-24 w-auto drop-shadow-md mt-4 transition-all duration-300"
+    />
+
     </div>
 
     <nav class="grow space-y-1 overflow-y-auto px-2 custom-scrollbar flex flex-col">
@@ -37,9 +45,7 @@
         :isCollapsed="uiStore.isSidebarCollapsed"
       >
         <template #icon>
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-          </svg>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
         </template>
       </SidebarItem>
 
@@ -135,9 +141,7 @@
         :isCollapsed="uiStore.isSidebarCollapsed"
       >
         <template #icon>
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
         </template>
       </SidebarItem>
 
@@ -201,8 +205,8 @@
       </div>
     </nav>
 
-    <div class="p-6 border-t border-slate-700 whitespace-nowrap overflow-hidden bg-[#151B33]">
-      <p class="text-[10px] text-gray-500 font-inter tracking-widest">SIABSEN v1.0</p>
+    <div class="p-6 border-t border-slate-700 whitespace-nowrap overflow-hidden">
+      <p class="text-[10px] text-gray-500 font-inter">SiAbsen v1.0</p>
       <p v-if="!uiStore.isSidebarCollapsed" class="text-xs text-gray-400 font-semibold mt-1">SMAN 1 Depok</p>
     </div>
   </aside>
@@ -224,23 +228,3 @@ const handleLogout = async () => {
   }
 }
 </script>
-
-<script lang="ts">
-export default {
-  // eslint-disable-next-line vue/multi-word-component-names
-  name: 'Sidebar'
-}
-</script>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2d3a5d;
-  border-radius: 10px;
-}
-</style>
