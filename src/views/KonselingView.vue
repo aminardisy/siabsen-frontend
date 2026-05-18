@@ -60,6 +60,7 @@
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">NISN</th>
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Kelas</th>
               <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Total Terlambat</th>
+              <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Total Alpha</th>
               <th v-if="canManageKonseling" class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
             </tr>
           </thead>
@@ -73,6 +74,11 @@
               <td class="px-6 py-4 text-center">
                 <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-black">
                   {{ item.totalLate }}x
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span class="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-black">
+                  {{ item.totalAlpha }}x
                 </span>
               </td>
               <td v-if="canManageKonseling" class="px-6 py-4 text-center">
