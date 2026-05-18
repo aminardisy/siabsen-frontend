@@ -13,11 +13,14 @@
     >
       <Navbar v-if="authStore.isAuthenticated" />
 
+      <div v-if="authStore.isAuthenticated" class="h-20 w-full flex-shrink-0"></div>
+
       <div :class="authStore.isAuthenticated ? 'p-4 md:p-8' : 'p-0'">
         <router-view />
       </div>
     </main>
   </div>
+
   <Toaster position="top-right" richColors closeButton />
 </template>
 

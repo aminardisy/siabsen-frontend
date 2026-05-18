@@ -6,37 +6,35 @@
     ]"
   >
     <div
-    class="relative bg-[#26A69A] flex flex-col items-center justify-center rounded-b-[2rem] shadow-lg mb-8 transition-all duration-300"
-    :class="uiStore.isSidebarCollapsed ? 'p-6 h-20' : 'p-8'"
-  >
-    <button
-      @click="uiStore.toggleSidebar()"
-      class="transition-all duration-300 hover:scale-110 text-white"
-      :class="uiStore.isSidebarCollapsed ? 'relative' : 'absolute top-5 right-5'"
+      class="relative bg-[#26A69A] flex flex-col items-center justify-center rounded-b-[2rem] shadow-lg mb-8 transition-all duration-300"
+      :class="uiStore.isSidebarCollapsed ? 'p-6 h-20' : 'p-8'"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="w-8 h-8"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="1.5"
+      <button
+        @click="uiStore.toggleSidebar()"
+        class="transition-all duration-300 hover:scale-110 text-white"
+        :class="uiStore.isSidebarCollapsed ? 'relative' : 'absolute top-5 right-5'"
       >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
-    </button>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-8 h-8"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
 
-    <img
-      v-if="!uiStore.isSidebarCollapsed"
-      src="@/assets/SIABSEN (2).png"
-      alt="SiAbsen Logo"
-      class="h-24 w-auto drop-shadow-md mt-4 transition-all duration-300"
-    />
-
+      <img
+        v-if="!uiStore.isSidebarCollapsed"
+        src="@/assets/SIABSEN (2).png"
+        alt="SiAbsen Logo"
+        class="h-24 w-auto drop-shadow-md mt-4 transition-all duration-300"
+      />
     </div>
 
     <nav class="grow space-y-1 overflow-y-auto px-2 custom-scrollbar flex flex-col">
-
       <SidebarItem
         v-if="['GURU', 'KESISWAAN', 'ADMIN'].includes(authStore.user?.role)"
         to="/dashboard"
@@ -128,7 +126,7 @@
       >
         <template #icon>
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 00-2 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
         </template>
       </SidebarItem>
@@ -141,7 +139,7 @@
         :isCollapsed="uiStore.isSidebarCollapsed"
       >
         <template #icon>
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
         </template>
       </SidebarItem>
 
@@ -194,7 +192,7 @@
           :active="false"
           :isCollapsed="uiStore.isSidebarCollapsed"
           class="text-red-400 hover:bg-red-900/20"
-          @click.prevent="handleLogout"
+          @click.prevent="isLogoutModalOpen = true"
         >
           <template #icon>
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,21 +208,37 @@
       <p v-if="!uiStore.isSidebarCollapsed" class="text-xs text-gray-400 font-semibold mt-1">SMAN 1 Depok</p>
     </div>
   </aside>
+
+  <ConfirmationModal
+    :show="isLogoutModalOpen"
+    title="Konfirmasi Keluar"
+    message="Apakah Anda yakin ingin mengakhiri sesi kerja dan keluar dari sistem aplikasi SiAbsen sekarang?"
+    confirm-text="Keluar Sistem"
+    cancel-text="Kembali"
+    variant="warning"
+    @close="isLogoutModalOpen = false"
+    @confirm="submitLogout"
+  />
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue' // FIX: Tambah import ref untuk state lokal
 import { useUIStore } from '@/stores/ui'
 import { useRoute } from 'vue-router'
 import SidebarItem from '@/components/layout/SidebarItem.vue'
 import { useAuthStore } from '@/stores/auth'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // FIX: Import komponen modal
 
 const route = useRoute()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 
-const handleLogout = async () => {
-  if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
-    await authStore.logout()
-  }
+// FIX: State lokal untuk mengontrol visibilitas modal logout
+const isLogoutModalOpen = ref(false)
+
+// FIX: Fungsi eksekusi setelah user menyetujui konvensi di dalam modal
+const submitLogout = async () => {
+  isLogoutModalOpen.value = false
+  await authStore.logout()
 }
 </script>

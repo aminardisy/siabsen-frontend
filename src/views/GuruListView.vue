@@ -1,151 +1,3 @@
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { guruService, importGuruExcel } from '@/services/guruService'
-import { toast } from 'vue-sonner'
-import type { GuruRequest, GuruResponse } from '@/models/guru'
-import BaseSearch from '@/components/layout/BaseSearch.vue'
-
-// 1. State Management
-const guruList = ref<GuruResponse[]>([])
-const searchQuery = ref('')
-const isModalOpen = ref(false)
-const modalMode = ref<'add' | 'edit'>('add')
-
-// Options untuk Dropdown
-const mapelOptions = ['Informatika', 'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Fisika', 'Biologi', 'Seni Budaya', 'PJOK']
-const tipePegawaiOptions: Array<{ label: string, value: 'GURU' | 'STAF' }> = [
-  { label: 'GURU', value: 'GURU' },
-  { label: 'STAF', value: 'STAF' }
-]
-
-const formGuru = ref<GuruRequest & { id?: number }>({
-  id: undefined,
-  nama: '',
-  nuptk: '',
-  jenisKelamin: 'LAKI_LAKI',
-  mataPelajaran: '',
-  tipePegawai: 'GURU'
-})
-
-const isGuruType = computed(() => formGuru.value.tipePegawai === 'GURU')
-
-// 2. Logic: Validasi
-const isNuptkInvalid = computed(() => {
-  const val = formGuru.value.nuptk
-  return val.length > 0 && val.length !== 16
-})
-
-const isFormValid = computed(() => {
-  const isMapelValid = !isGuruType.value || (formGuru.value.mataPelajaran?.trim() ?? '').length > 0
-
-  return (
-    formGuru.value.nama.trim().length > 0 &&
-    formGuru.value.nuptk.length === 16 &&
-    isMapelValid &&
-    !isNuptkInvalid.value
-  )
-})
-
-// 3. Logic: Search & Filter
-const filteredGuru = computed(() => {
-  if (!guruList.value) return []
-  const query = searchQuery.value.toLowerCase()
-  return guruList.value.filter(g =>
-    g.nama.toLowerCase().includes(query) ||
-    g.nip.includes(query) ||
-    g.jabatan.toLowerCase().includes(query)
-  )
-})
-
-// 4. API Functions
-const fetchData = async () => {
-  try {
-    const res = await guruService.getAll()
-    guruList.value = res
-  } catch (e) {
-    toast.error('Gagal memuat data guru')
-  }
-}
-
-const handleNuptkInput = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  // Hanya izinkan angka
-  formGuru.value.nuptk = target.value.replace(/\D/g, '').slice(0, 16)
-}
-
-const handleDelete = async (id: number, nama: string) => {
-  if (confirm(`Apakah Anda yakin ingin menghapus data guru ${nama}?`)) {
-    try {
-      await guruService.delete(id)
-      toast.success('Data guru berhasil dihapus')
-      fetchData()
-    } catch (e) {
-      toast.error('Gagal menghapus data. Guru mungkin masih menjabat sebagai Wali Kelas.')
-    }
-  }
-}
-
-const fileInputGuru = ref<HTMLInputElement | null>(null)
-
-const handleImportGuru = async (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    const file = target.files[0]
-    try {
-      const res = await importGuruExcel(file)
-      toast.success(res.message || 'Data guru/staf berhasil diimpor!')
-      fetchData() // Auto-refresh isi tabel guru
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Gagal mengimpor data guru. Pastikan NUPTK tepat 16 digit angka.')
-    } finally {
-      target.value = '' // Reset input file
-    }
-  }
-}
-
-const openModal = (mode: 'add' | 'edit', data: any = null) => {
-  modalMode.value = mode
-  if (mode === 'edit' && data) {
-    formGuru.value = {
-      id: data.id,
-      nama: data.nama,
-      nuptk: data.nip,
-      jenisKelamin: data.jenisKelamin || 'LAKI_LAKI',
-      mataPelajaran: data.jabatan,
-      tipePegawai: (data.tipePegawai as 'GURU' | 'STAF') || 'GURU'
-    }
-  } else {
-    formGuru.value = { id: undefined, nama: '', nuptk: '', jenisKelamin: 'LAKI_LAKI', mataPelajaran: '', tipePegawai: 'GURU' }
-  }
-  isModalOpen.value = true
-}
-
-const handleSubmit = async () => {
-  if (!isFormValid.value) return
-
-  const payload: GuruRequest = {
-    ...formGuru.value,
-    mataPelajaran: isGuruType.value ? formGuru.value.mataPelajaran : ''
-  }
-
-  try {
-    if (modalMode.value === 'add') {
-      await guruService.create(payload)
-      toast.success('Guru baru berhasil ditambahkan')
-    } else {
-      await guruService.update(formGuru.value.id!, payload)
-      toast.success('Data guru berhasil diperbarui')
-    }
-    isModalOpen.value = false
-    fetchData()
-  } catch (e: any) {
-    toast.error(e.response?.data?.message || 'Terjadi kesalahan sistem')
-  }
-}
-
-onMounted(fetchData)
-</script>
-
 <template>
   <div class="p-8 w-full min-h-screen bg-gray-50 font-inter text-left">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4 text-left">
@@ -224,7 +76,7 @@ onMounted(fetchData)
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button @click="handleDelete(g.id, g.nama)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                <button @click="triggerDeleteGuru(g.id, g.nama)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -237,10 +89,14 @@ onMounted(fetchData)
     </div>
 
     <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
           <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Guru Baru' : 'Edit Data Guru' }}</h3>
-          <button @click="isModalOpen = false" class="text-2xl hover:rotate-90 transition-transform">✕</button>
+          <button @click="isModalOpen = false" class="p-1 hover:bg-white/10 rounded-lg transition-colors group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <form @submit.prevent="handleSubmit" class="p-8 space-y-5">
@@ -278,7 +134,10 @@ onMounted(fetchData)
               placeholder="Contoh: 1234567890123456"
               required
             />
-            <p v-if="isNuptkInvalid" class="text-[10px] text-red-500 font-bold ml-1 animate-pulse">
+            <p v-if="isNuptkInvalid" class="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
               NUPTK harus 16 digit (Saat ini: {{ formGuru.nuptk.length }})
             </p>
           </div>
@@ -317,5 +176,186 @@ onMounted(fetchData)
         </form>
       </div>
     </div>
+
+    <ConfirmationModal
+      :show="isDeleteModalOpen"
+      title="Hapus Data Guru / Staf"
+      :message="`Apakah Anda yakin ingin menghapus permanen data rekor dari ${selectedGuruName}? Tindakan ini berdampak sistemis dan tidak dapat diurungkan kembali.`"
+      confirm-text="Hapus Permanen"
+      cancel-text="Batal"
+      variant="danger"
+      @close="isDeleteModalOpen = false"
+      @confirm="submitDeleteGuru"
+    />
+
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { guruService, importGuruExcel } from '@/services/guruService'
+import { toast } from 'vue-sonner'
+import type { GuruRequest, GuruResponse } from '@/models/guru'
+import BaseSearch from '@/components/layout/BaseSearch.vue'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // FIX: Impor modal konfirmasi global
+
+// 1. State Management
+const guruList = ref<GuruResponse[]>([])
+const searchQuery = ref('')
+const isModalOpen = ref(false)
+const modalMode = ref<'add' | 'edit'>('add')
+
+// FIX: State Tambahan Pengendali Alur Modal Konfirmasi Hapus Guru
+const isDeleteModalOpen = ref(false)
+const selectedGuruId = ref<number | null>(null)
+const selectedGuruName = ref('')
+
+// Options untuk Dropdown
+const mapelOptions = ['Informatika', 'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Fisika', 'Biologi', 'Seni Budaya', 'PJOK']
+const tipePegawaiOptions: Array<{ label: string, value: 'GURU' | 'STAF' }> = [
+  { label: 'GURU', value: 'GURU' },
+  { label: 'STAF', value: 'STAF' }
+]
+
+const formGuru = ref<GuruRequest & { id?: number }>({
+  id: undefined,
+  nama: '',
+  nuptk: '',
+  jenisKelamin: 'LAKI_LAKI',
+  mataPelajaran: '',
+  tipePegawai: 'GURU'
+})
+
+const isGuruType = computed(() => formGuru.value.tipePegawai === 'GURU')
+
+// 2. Logic: Validasi
+const isNuptkInvalid = computed(() => {
+  const val = formGuru.value.nuptk
+  return val.length > 0 && val.length !== 16
+})
+
+const isFormValid = computed(() => {
+  const isMapelValid = !isGuruType.value || (formGuru.value.mataPelajaran?.trim() ?? '').length > 0
+
+  return (
+    formGuru.value.nama.trim().length > 0 &&
+    formGuru.value.nuptk.length === 16 &&
+    isMapelValid &&
+    !isNuptkInvalid.value
+  )
+})
+
+// 3. Logic: Search & Filter
+const filteredGuru = computed(() => {
+  if (!guruList.value) return []
+  const query = searchQuery.value.toLowerCase()
+  return guruList.value.filter(g =>
+    g.nama.toLowerCase().includes(query) ||
+    g.nip.includes(query) ||
+    g.jabatan.toLowerCase().includes(query)
+  )
+})
+
+// 4. API Functions
+const fetchData = async () => {
+  try {
+    const res = await guruService.getAll()
+    guruList.value = res
+  } catch (e) {
+    toast.error('Gagal memuat data guru')
+  }
+}
+
+const handleNuptkInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  formGuru.value.nuptk = target.value.replace(/\D/g, '').slice(0, 16)
+}
+
+// FIX: Fungsi baru untuk menyimpan state target sebelum memunculkan modal bahaya merah
+const triggerDeleteGuru = (id: number, nama: string) => {
+  selectedGuruId.value = id
+  selectedGuruName.value = nama
+  isDeleteModalOpen.value = true
+}
+
+// FIX: Eksekusi final penghapusan data ke server Railway
+const submitDeleteGuru = async () => {
+  if (!selectedGuruId.value) return
+  try {
+    await guruService.delete(selectedGuruId.value)
+    toast.success('Data guru berhasil dihapus')
+    isDeleteModalOpen.value = false
+    fetchData()
+  } catch (e) {
+    toast.error('Gagal menghapus data. Guru mungkin masih menjabat sebagai Wali Kelas.')
+  } finally {
+    selectedGuruId.value = null
+  }
+}
+
+const fileInputGuru = ref<HTMLInputElement | null>(null)
+
+const handleImportGuru = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    const file = target.files[0]
+    try {
+      const res = await importGuruExcel(file)
+      toast.success(res.message || 'Data guru/staf berhasil diimpor!')
+      fetchData()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengimpor data guru. Pastikan NUPTK tepat 16 digit angka.')
+    } finally {
+      target.value = ''
+    }
+  }
+}
+
+const openModal = (mode: 'add' | 'edit', data: any = null) => {
+  modalMode.value = mode
+  if (mode === 'edit' && data) {
+    formGuru.value = {
+      id: data.id,
+      nama: data.nama,
+      nuptk: data.nip,
+      jenisKelamin: data.jenisKelamin || 'LAKI_LAKI',
+      mataPelajaran: data.jabatan,
+      tipePegawai: (data.tipePegawai as 'GURU' | 'STAF') || 'GURU'
+    }
+  } else {
+    formGuru.value = { id: undefined, nama: '', nuptk: '', jenisKelamin: 'LAKI_LAKI', mataPelajaran: '', tipePegawai: 'GURU' }
+  }
+  isModalOpen.value = true
+}
+
+const handleSubmit = async () => {
+  if (!isFormValid.value) return
+
+  const payload: GuruRequest = {
+    ...formGuru.value,
+    mataPelajaran: isGuruType.value ? formGuru.value.mataPelajaran : ''
+  }
+
+  try {
+    if (modalMode.value === 'add') {
+      await guruService.create(payload)
+      toast.success('Guru baru berhasil ditambahkan')
+    } else {
+      await guruService.update(formGuru.value.id!, payload)
+      toast.success('Data guru berhasil diperbarui')
+    }
+    isModalOpen.value = false
+    fetchData()
+  } catch (e: any) {
+    toast.error(e.response?.data?.message || 'Terjadi kesalahan sistem')
+  }
+}
+
+onMounted(fetchData)
+</script>
+
+<style scoped>
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+</style>

@@ -124,10 +124,8 @@ const handleLogin = async () => {
 
     if (['ADMIN', 'GURU', 'KESISWAAN'].includes(userRole)) {
       router.push('/dashboard')
-    } else if (userRole === 'SEKRETARIS') {
-      router.push('/absensi')
-    } else if (userRole === 'PIKET') {
-      router.push('/catat-keterlambatan')
+    } else if (['SEKRETARIS', 'PIKET'].includes(userRole)) {
+      router.push('/workspace')
     } else {
       router.push('/')
     }
