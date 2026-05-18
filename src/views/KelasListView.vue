@@ -1,157 +1,16 @@
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { kelasService } from '@/services/kelasService'
-import { guruService } from '@/services/guruService'
-import { toast } from 'vue-sonner'
-import BaseSearch from '@/components/layout/BaseSearch.vue'
-
-// 1. State Management
-const kelasList = ref<any[]>([])
-const daftarGuru = ref<any[]>([])
-const searchQuery = ref('')
-const isModalOpen = ref(false)
-const modalMode = ref<'add' | 'edit'>('add')
-
-// Options untuk Dropdown
-const tingkatOptions = ['X', 'XI', 'XII']
-const jurusanOptions = ['IPA', 'IPS']
-
-const formKelas = ref({
-  id: undefined as number | undefined,
-  tingkat: '',
-  jurusan: '',
-  nomorKelas: '' as string | number,
-  guruId: null as number | null,
-  tahunAjaran: '2025/2026' // Default value
-})
-
-// 2. Logic: Rangkai Nama Kelas Otomatis
-// Nama Kelas = Tingkat + Jurusan + Nomor (Contoh: X IPA 1)
-const generatedNamaKelas = computed(() => {
-  if (!formKelas.value.tingkat || !formKelas.value.jurusan || !formKelas.value.nomorKelas) return '-'
-  return `${formKelas.value.tingkat} ${formKelas.value.jurusan} ${formKelas.value.nomorKelas}`
-})
-
-// 3. Logic: Validasi Form
-const isFormValid = computed(() => {
-  return (
-    formKelas.value.tingkat !== '' &&
-    formKelas.value.jurusan !== '' &&
-    formKelas.value.nomorKelas !== '' &&
-    formKelas.value.guruId !== null &&
-    formKelas.value.tahunAjaran !== ''
-  )
-})
-
-// 4. Logic: Search & Filter
-const filteredKelas = computed(() => {
-  if (!kelasList.value) return []
-  const query = searchQuery.value.toLowerCase()
-  return kelasList.value.filter(k =>
-    k.namaKelas.toLowerCase().includes(query) ||
-    k.namaWaliKelas.toLowerCase().includes(query)
-  )
-})
-
-const availableWaliKelas = computed(() => {
-  const assignedNipByOtherKelas = new Set(
-    kelasList.value
-      .filter(k => modalMode.value !== 'edit' || k.id !== formKelas.value.id)
-      .map(k => k.nipWaliKelas)
-      .filter((nip: string) => nip && nip !== '-')
-  )
-
-  return daftarGuru.value.filter(g => g.tipePegawai === 'GURU' && !assignedNipByOtherKelas.has(g.nip))
-})
-
-// 5. API Functions
-const fetchData = async () => {
-  try {
-    const [resK, resG] = await Promise.all([
-      kelasService.getAll(),
-      guruService.getAll()
-    ])
-    kelasList.value = resK
-    daftarGuru.value = resG
-  } catch (e) {
-    toast.error('Gagal mengambil data dari server')
-  }
-}
-
-const handleSubmit = async () => {
-  if (!isFormValid.value) return
-
-  try {
-    const payload = {
-      namaKelas: generatedNamaKelas.value, // Hasil rangkaian otomatis
-      tingkat: formKelas.value.tingkat,
-      jurusan: formKelas.value.jurusan,
-      guruId: formKelas.value.guruId,
-      tahunAjaran: formKelas.value.tahunAjaran
-    }
-
-    if (modalMode.value === 'add') {
-      await kelasService.create(payload)
-      toast.success('Kelas baru berhasil dibuat')
-    } else {
-      await kelasService.update(formKelas.value.id!, payload)
-      toast.success('Data kelas berhasil diperbarui')
-    }
-
-    isModalOpen.value = false
-    fetchData()
-  } catch (error: any) {
-    toast.error(error.response?.data?.message || 'Terjadi kesalahan sistem')
-  }
-}
-
-const openModal = (mode: 'add' | 'edit', data: any = null) => {
-  modalMode.value = mode
-  if (mode === 'edit' && data) {
-    const guruAsli = daftarGuru.value.find(g => g.nip === data.nipWaliKelas)
-
-    // Pecah nama kelas kembali ke form jika perlu (Asumsi format: "Tingkat Jurusan Nomor")
-    const parts = data.namaKelas.split(' ')
-
-    formKelas.value = {
-      id: data.id,
-      tingkat: data.tingkat || parts[0],
-      jurusan: data.jurusan || parts[1],
-      nomorKelas: parts[2] || '',
-      guruId: guruAsli ? guruAsli.id : null,
-      tahunAjaran: data.tahunAjaran || '2025/2026'
-    }
-  } else {
-    formKelas.value = { id: undefined, tingkat: '', jurusan: '', nomorKelas: '', guruId: null, tahunAjaran: '2025/2026' }
-  }
-  isModalOpen.value = true
-}
-
-const handleDelete = async (id: number, nama: string) => {
-  if (confirm(`Hapus kelas ${nama}? Semua siswa di kelas ini akan kehilangan asosiasi kelasnya.`)) {
-    try {
-      await kelasService.delete(id)
-      toast.success('Kelas berhasil dihapus')
-      fetchData()
-    } catch (e) {
-      toast.error('Gagal menghapus kelas')
-    }
-  }
-}
-
-onMounted(fetchData)
-</script>
-
 <template>
   <div class="p-8 w-full min-h-screen bg-gray-50 font-inter text-left">
-    <div class="flex justify-between items-end mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4 text-left">
       <div>
         <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Kelas</h1>
-        <p class="text-gray-500">Atur ruang kelas dan penempatan Wali Kelas</p>
+        <p class="text-gray-500 text-sm">Atur ruang kelas dan penempatan Wali Kelas</p>
       </div>
-      <div class="flex items-center gap-4">
-        <BaseSearch v-model="searchQuery" placeholder="Cari Nama Kelas atau Wali..." />
-        <button @click="openModal('add')" class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-100">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+        <BaseSearch v-model="searchQuery" placeholder="Cari Nama Kelas atau Wali..." class="w-full sm:w-64 h-11" />
+        <button
+          @click="openModal('add')"
+          class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 h-11 rounded-xl font-bold transition-all shadow-md shadow-teal-100/50 whitespace-nowrap text-sm"
+        >
           + Tambah Kelas
         </button>
       </div>
@@ -180,12 +39,12 @@ onMounted(fetchData)
             <td class="px-6 py-4 text-center text-sm font-bold">{{ k.jumlahSiswa }}</td>
             <td class="px-6 py-4">
               <div class="flex justify-center gap-3">
-                <button @click="openModal('edit', k)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                <button @click="openModal('edit', k)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button @click="handleDelete(k.id, k.namaKelas)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors">
+                <button @click="triggerDeleteKelas(k.id, k.namaKelas)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -198,10 +57,14 @@ onMounted(fetchData)
     </div>
 
     <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-left">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-left animate-in fade-in zoom-in-95 duration-200">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
           <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Kelas' : 'Edit Kelas' }}</h3>
-          <button @click="isModalOpen = false" class="text-2xl hover:rotate-90 transition-transform">✕</button>
+          <button @click="isModalOpen = false" class="p-1 hover:bg-white/10 rounded-lg transition-colors group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <form @submit.prevent="handleSubmit" class="p-8 space-y-5">
@@ -262,5 +125,180 @@ onMounted(fetchData)
         </form>
       </div>
     </div>
+
+    <ConfirmationModal
+      :show="isDeleteModalOpen"
+      title="Hapus Data Ruang Kelas"
+      :message="`Apakah Anda yakin ingin menghapus kelas ${selectedKelasName} secara permanen? Seluruh siswa di dalam kelas ini akan kehilangan asosiasi kelas mereka di sistem.`"
+      confirm-text="Hapus Permanen"
+      cancel-text="Batal"
+      variant="danger"
+      @close="isDeleteModalOpen = false"
+      @confirm="submitDeleteKelas"
+    />
+
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { kelasService } from '@/services/kelasService'
+import { guruService } from '@/services/guruService'
+import { toast } from 'vue-sonner'
+import BaseSearch from '@/components/layout/BaseSearch.vue'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // FIX: Impor komponen modal konfirmasi global
+
+// 1. State Management
+const kelasList = ref<any[]>([])
+const daftarGuru = ref<any[]>([])
+const searchQuery = ref('')
+const isModalOpen = ref(false)
+const modalMode = ref<'add' | 'edit'>('add')
+
+// FIX: State Tambahan Pengendali Alur Modal Konfirmasi Hapus Ruang Kelas
+const isDeleteModalOpen = ref(false)
+const selectedKelasId = ref<number | null>(null)
+const selectedKelasName = ref('')
+
+// Options untuk Dropdown
+const tingkatOptions = ['X', 'XI', 'XII']
+const jurusanOptions = ['IPA', 'IPS']
+
+const formKelas = ref({
+  id: undefined as number | undefined,
+  tingkat: '',
+  jurusan: '',
+  nomorKelas: '' as string | number,
+  guruId: null as number | null,
+  tahunAjaran: '2025/2026'
+})
+
+// 2. Logic: Rangkai Nama Kelas Otomatis
+const generatedNamaKelas = computed(() => {
+  if (!formKelas.value.tingkat || !formKelas.value.jurusan || !formKelas.value.nomorKelas) return '-'
+  return `${formKelas.value.tingkat} ${formKelas.value.jurusan} ${formKelas.value.nomorKelas}`
+})
+
+// 3. Logic: Validasi Form
+const isFormValid = computed(() => {
+  return (
+    formKelas.value.tingkat !== '' &&
+    formKelas.value.jurusan !== '' &&
+    formKelas.value.nomorKelas !== '' &&
+    formKelas.value.guruId !== null &&
+    formKelas.value.tahunAjaran !== ''
+  )
+})
+
+// 4. Logic: Search & Filter
+const filteredKelas = computed(() => {
+  if (!kelasList.value) return []
+  const query = searchQuery.value.toLowerCase()
+  return kelasList.value.filter(k =>
+    k.namaKelas.toLowerCase().includes(query) ||
+    k.namaWaliKelas.toLowerCase().includes(query)
+  )
+})
+
+const availableWaliKelas = computed(() => {
+  const assignedNipByOtherKelas = new Set(
+    kelasList.value
+      .filter(k => modalMode.value !== 'edit' || k.id !== formKelas.value.id)
+      .map(k => k.nipWaliKelas)
+      .filter((nip: string) => nip && nip !== '-')
+  )
+
+  return daftarGuru.value.filter(g => g.tipePegawai === 'GURU' && !assignedNipByOtherKelas.has(g.nip))
+})
+
+// 5. API Functions
+const fetchData = async () => {
+  try {
+    const [resK, resG] = await Promise.all([
+      kelasService.getAll(),
+      guruService.getAll()
+    ])
+    kelasList.value = resK
+    daftarGuru.value = resG
+  } catch (e) {
+    toast.error('Gagal mengambil data dari server')
+  }
+}
+
+const handleSubmit = async () => {
+  if (!isFormValid.value) return
+
+  try {
+    const payload = {
+      namaKelas: generatedNamaKelas.value,
+      tingkat: formKelas.value.tingkat,
+      jurusan: formKelas.value.jurusan,
+      guruId: formKelas.value.guruId,
+      tahunAjaran: formKelas.value.tahunAjaran
+    }
+
+    if (modalMode.value === 'add') {
+      await kelasService.create(payload)
+      toast.success('Kelas baru berhasil dibuat')
+    } else {
+      await kelasService.update(formKelas.value.id!, payload)
+      toast.success('Data kelas berhasil diperbarui')
+    }
+
+    isModalOpen.value = false
+    fetchData()
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Terjadi kesalahan sistem')
+  }
+}
+
+const openModal = (mode: 'add' | 'edit', data: any = null) => {
+  modalMode.value = mode
+  if (mode === 'edit' && data) {
+    const guruAsli = daftarGuru.value.find(g => g.nip === data.nipWaliKelas)
+    const parts = data.namaKelas.split(' ')
+
+    formKelas.value = {
+      id: data.id,
+      tingkat: data.tingkat || parts[0],
+      jurusan: data.jurusan || parts[1],
+      nomorKelas: parts[2] || '',
+      guruId: guruAsli ? guruAsli.id : null,
+      tahunAjaran: data.tahunAjaran || '2025/2026'
+    }
+  } else {
+    formKelas.value = { id: undefined, tingkat: '', jurusan: '', nomorKelas: '', guruId: null, tahunAjaran: '2025/2026' }
+  }
+  isModalOpen.value = true
+}
+
+// FIX: Fungsi baru menyimpan state target sebelum memunculkan modal peringatan merah
+const triggerDeleteKelas = (id: number, nama: string) => {
+  selectedKelasId.value = id
+  selectedKelasName.value = nama
+  isDeleteModalOpen.value = true
+}
+
+// FIX: Eksekusi final penghapusan data kelas ke server backend Railway
+const submitDeleteKelas = async () => {
+  if (!selectedKelasId.value) return
+  try {
+    await kelasService.delete(selectedKelasId.value)
+    toast.success('Kelas berhasil dihapus')
+    isDeleteModalOpen.value = false
+    fetchData()
+  } catch (e) {
+    toast.error('Gagal menghapus kelas')
+  } finally {
+    selectedKelasId.value = null
+  }
+}
+
+onMounted(fetchData)
+</script>
+
+<style scoped>
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+</style>
