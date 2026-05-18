@@ -8,7 +8,9 @@
 
       <div class="bg-[#26A69A] p-8 text-center text-white relative">
         <div class="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-2xl mb-3 backdrop-blur-sm">
-          <span class="text-2xl">⚡</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
         </div>
         <h1 class="text-2xl font-black tracking-wide uppercase">SiAbsen APP</h1>
         <p class="text-teal-50 text-xs mt-1 opacity-80 font-medium">Portal Presensi & Informasi SMAN 1 Depok</p>
@@ -100,7 +102,7 @@ const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
-const showPassword = ref(false) // State kontrol mata password
+const showPassword = ref(false)
 
 // Handle Submit Form
 const handleLogin = async () => {
@@ -111,7 +113,6 @@ const handleLogin = async () => {
 
   isLoading.value = true
   try {
-    // Memanggil aksi Pinia Auth
     await authStore.login({
       email: email.value,
       password: password.value
@@ -119,17 +120,16 @@ const handleLogin = async () => {
 
     toast.success(`Selamat Datang Kembali, ${authStore.user?.nama || 'Pengguna'}`)
 
-    // SMART ROUTING: Mengarahkan user secara dinamis berdasarkan Role mereka
     const userRole = authStore.user?.role
 
     if (['ADMIN', 'GURU', 'KESISWAAN'].includes(userRole)) {
-      router.push('/dashboard') // Kelompok Analitik utama
+      router.push('/dashboard')
     } else if (userRole === 'SEKRETARIS') {
-      router.push('/absensi') // Kelompok pencatat absensi kelas harian
+      router.push('/absensi')
     } else if (userRole === 'PIKET') {
-      router.push('/catat-keterlambatan') // Kelompok pencatat gerbang pagi
+      router.push('/catat-keterlambatan')
     } else {
-      router.push('/') // Fallback ke Landing Page jika tidak terdeteksi
+      router.push('/')
     }
 
   } catch (error: any) {
@@ -142,7 +142,6 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-/* Tambahan transisi font inter jika diperlukan */
 .font-inter {
   font-family: 'Inter', sans-serif;
 }
