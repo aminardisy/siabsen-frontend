@@ -219,9 +219,26 @@ const loadData = async () => {
 const updateLocalStatus = (siswaId: number, status: string) => {
   const siswa = attendanceStore.attendanceData.students.find(s => s.id === siswaId)
   if (siswa) {
+    const previousStatus = siswa.status
     siswa.status = status
+
     // Memperbarui rekap kalkulasi summary counter atas secara interaktif
-    attendanceStore.recalculateSummary()
+    const summaryMap = {
+      HADIR: 'hadir',
+      SAKIT: 'sakit',
+      IZIN: 'izin',
+      ALPHA: 'alfa'
+    } as const
+
+    const prevKey = summaryMap[previousStatus as keyof typeof summaryMap]
+    const nextKey = summaryMap[status as keyof typeof summaryMap]
+
+    if (prevKey && attendanceStore.attendanceData.summary[prevKey] > 0) {
+      attendanceStore.attendanceData.summary[prevKey]--
+    }
+    if (nextKey) {
+      attendanceStore.attendanceData.summary[nextKey]++
+    }
   }
 }
 
