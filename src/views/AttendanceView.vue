@@ -1,7 +1,6 @@
 <template>
   <div class="p-4 sm:p-6 bg-slate-50 min-h-screen font-inter">
 
-    <!-- Top Action Header Bar -->
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 sm:mb-8 gap-4 text-left">
       <div class="w-full md:w-auto">
         <h1 class="text-xl sm:text-2xl font-bold text-[#1A2342]">Absensi Harian Siswa</h1>
@@ -33,12 +32,12 @@
           type="date"
           v-model="selectedDate"
           @change="loadData"
+          :max="maxDate"
           class="outline-none text-gray-700 bg-transparent cursor-pointer font-semibold text-sm w-full md:w-auto text-right md:text-left"
         />
       </div>
     </div>
 
-    <!-- Summary Counters Grid -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8 text-left">
       <div
         v-for="(val, key) in attendanceStore.attendanceData.summary"
@@ -50,7 +49,6 @@
       </div>
     </div>
 
-    <!-- Data Table Container -->
     <div v-if="attendanceStore.selectedKelasId" class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200 text-left animate-in fade-in duration-150">
       <div class="overflow-x-auto w-full custom-scrollbar">
         <table class="w-full text-left min-w-[600px] border-collapse">
@@ -95,7 +93,6 @@
       </div>
     </div>
 
-    <!-- Empty State Component -->
     <div v-else class="bg-white p-12 sm:p-20 rounded-2xl border-2 border-dashed border-slate-200 text-center">
       <div class="mx-auto text-slate-300 mb-3 flex justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -107,7 +104,6 @@
       </p>
     </div>
 
-    <!-- Bottom Action Button Bar -->
     <div class="mt-6 sm:mt-8 flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3">
       <p v-if="attendanceStore.isLoading" class="text-sm text-gray-400 text-center sm:text-left animate-pulse py-2 font-medium">
         Memproses data ke server...
@@ -116,8 +112,9 @@
       <button
         v-if="authStore.user?.role === 'SEKRETARIS' && !attendanceStore.isLocked"
         @click="triggerSubmitModal"
+        :disabled="selectedDate > todayDateStr"
         :class="[
-          'w-full sm:w-auto px-8 h-12 rounded-xl font-bold text-white transition-all shadow-md active:scale-95 text-sm',
+          'w-full sm:w-auto px-8 h-12 rounded-xl font-bold text-white transition-all shadow-md active:scale-95 text-sm disabled:opacity-40 disabled:cursor-not-allowed',
           attendanceStore.isSubmitted ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-100' : 'bg-[#1A2342] hover:bg-slate-800 shadow-slate-100'
         ]"
       >
@@ -143,7 +140,6 @@
       </div>
     </div>
 
-    <!-- MODAL KOORDINASI A: Konfirmasi Pengiriman Laporan Pertama Kali -->
     <ConfirmationModal
       :show="isSubmitModalOpen"
       title="Kirim Laporan Absensi"
@@ -154,7 +150,6 @@
       @confirm="executeSubmitAttendance"
     />
 
-    <!-- MODAL KOORDINASI B: Konfirmasi Update Perubahan Rekor Laporan -->
     <ConfirmationModal
       :show="isUpdateModalOpen"
       title="Perbarui Rekap Laporan"
@@ -165,7 +160,6 @@
       @confirm="executeSubmitAttendance"
     />
 
-    <!-- MODAL KOORDINASI C: Konfirmasi Persetujuan Kunci Wali Kelas (Danger Variant) -->
     <ConfirmationModal
       :show="isApproveModalOpen"
       title="Setujui & Kunci Laporan"
@@ -191,17 +185,32 @@ const attendanceStore = useAttendanceStore()
 const authStore = useAuthStore()
 
 const selectedDate = ref(new Date().toISOString().substr(0, 10))
+const todayDateStr = new Date().toISOString().substr(0, 10)
+
+// Computed untuk membatasi atribut HTML max date khusus peran SEKRETARIS
+const maxDate = computed(() => {
+  if (authStore.user?.role === 'SEKRETARIS') {
+    return todayDateStr
+  }
+  return undefined // Guru/Admin tetap bebas melihat data backlog lampau/mendatang jika diperlukan
+})
 
 // State Kontrol Pembukaan Dialog Modal Konfirmasi Kustom
 const isSubmitModalOpen = ref(false)
 const isUpdateModalOpen = ref(false)
 const isApproveModalOpen = ref(false)
 
-// FIX LOGIKA: Menolak hak pengubahan data untuk Guru jika laporan sudah dikirim oleh sekretaris
+// FIX LOGIKA: Menolak hak pengubahan data untuk Guru jika laporan sudah dikirim, serta memblokir masa depan untuk Sekretaris
 const isStatusDisabled = computed(() => {
   if (attendanceStore.isLocked) return true
 
   const role = authStore.user?.role
+
+  // PROTEKSI: Jika user sekretaris membuka tanggal masa depan, matikan fungsi tombol baris tabel
+  if (role === 'SEKRETARIS' && selectedDate.value > todayDateStr) {
+    return true
+  }
+
   // Jika laporan sudah dikirim, Guru/Wali Kelas dilarang mengutak-atik isi status rekor murid
   if (role === 'GURU' && attendanceStore.isSubmitted) return true
   if (role === 'SEKRETARIS' && attendanceStore.isSubmitted) return false // Sekretaris tetap diizinkan untuk update sebelum di-lock
@@ -255,6 +264,13 @@ const getStatusColor = (status: string) => {
 // Menyeleksi jenis modal kirim yang akan ditampilkan berdasarkan status riwayat
 const triggerSubmitModal = () => {
   if (!attendanceStore.selectedKelasId) return
+
+  // PROTEKSI DOUBLE: Validasi keras saat eksekusi tombol kirim laporan di masa depan
+  if (authStore.user?.role === 'SEKRETARIS' && selectedDate.value > todayDateStr) {
+    toast.error('Gagal memproses: Anda dilarang melakukan absensi untuk tanggal di masa depan!')
+    return
+  }
+
   if (attendanceStore.isSubmitted) {
     isUpdateModalOpen.value = true
   } else {

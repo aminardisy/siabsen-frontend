@@ -58,7 +58,22 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          <tr v-for="s in filteredSiswa" :key="s.id" class="hover:bg-slate-50 transition-colors group">
+
+          <tr v-if="isLoading" v-for="i in 5" :key="'skeleton-' + i" class="animate-pulse bg-white">
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-24"></div></td>
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-3/4"></div></td>
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-16"></div></td>
+            <td class="px-6 py-4 text-center"><div class="h-4 bg-slate-200 rounded-md w-20 mx-auto"></div></td>
+            <td class="px-6 py-4 text-center"><div class="h-5 bg-slate-200 rounded-full w-14 mx-auto"></div></td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex justify-center gap-3">
+                <div class="h-8 bg-slate-200 rounded-lg w-8"></div>
+                <div class="h-8 bg-slate-200 rounded-lg w-8"></div>
+              </div>
+            </td>
+          </tr>
+
+          <tr v-else-if="filteredSiswa.length > 0" v-for="s in filteredSiswa" :key="s.id" class="hover:bg-slate-50 transition-colors group">
             <td class="px-6 py-4 text-sm font-medium text-gray-500 font-mono">{{ s.nisn }}</td>
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ s.nama }}</td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ s.namaKelas || '-' }}</td>
@@ -75,12 +90,18 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button v-if="s.status === 'Aktif'" @click="openDeactivateModal(s.id, s.nama)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Nonaktifkan">
+                <button @click="openDeactivateModal(s.id, s.nama)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Nonaktifkan">
                   <svg xmlns="http://www.w3.org/2000/xl" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
                 </button>
               </div>
+            </td>
+          </tr>
+
+          <tr v-else>
+            <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm font-medium">
+              Tidak ada data siswa terdaftar yang cocok dengan kriteria pencarian.
             </td>
           </tr>
         </tbody>
@@ -208,11 +229,14 @@ const searchQuery = ref('')
 const isModalOpen = ref(false)
 const modalMode = ref<'add' | 'edit'>('add')
 
-// FIX: State Tambahan untuk Mengontrol Modal Deaktivasi dengan Alasan
+// FIX: State Tambahan mengontrol putaran Skeleton Loader
+const isLoading = ref(false)
+
+// State Tambahan untuk Mengontrol Modal Deaktivasi dengan Alasan
 const isDeactivateModalOpen = ref(false)
 const selectedSiswaId = ref<number | null>(null)
 const selectedSiswaName = ref('')
-const alasanNonaktif = ref('Pindah Sekolah') // Nilai default dropdown
+const alasanNonaktif = ref('Pindah Sekolah')
 
 // State Form
 const formSiswa = ref<SiswaRequest & { id?: number }>({
@@ -246,12 +270,15 @@ const filteredSiswa = computed(() => {
   return siswaList.value.filter(s =>
     s.nama.toLowerCase().includes(query) ||
     s.nisn.includes(query) ||
-    s.namaKelas.toLowerCase().includes(query)
+    s.namaKelas.toLowerCase().includes(query) ||
+    s.status.toLowerCase() == (query)
   )
 })
 
 // 4. API Functions
 const fetchData = async () => {
+  // FIX: Mengunci state loading aktif sebelum hit API Spring Boot
+  isLoading.value = true
   try {
     const [resSiswa, resKelas] = await Promise.all([
       siswaService.getAll(),
@@ -261,6 +288,9 @@ const fetchData = async () => {
     daftarKelas.value = resKelas
   } catch (error) {
     toast.error('Gagal mengambil data dari server')
+  } finally {
+    // FIX: Mematikan status loading setelah proses selesai
+    isLoading.value = false
   }
 }
 
@@ -296,15 +326,13 @@ const handleSubmit = async () => {
   }
 }
 
-// FIX: Fungsi baru untuk memicu pembukaan modal penonaktifan
 const openDeactivateModal = (id: number, nama: string) => {
   selectedSiswaId.value = id
   selectedSiswaName.value = nama
-  alasanNonaktif.value = 'Pindah Sekolah' // Reset pilihan ke default setiap kali dibuka
+  alasanNonaktif.value = 'Pindah Sekolah'
   isDeactivateModalOpen.value = true
 }
 
-// FIX: Fungsi final eksekusi pendaftaran data ke backend Spring Boot setelah dikonfirmasi
 const submitNonaktif = async () => {
   if (!selectedSiswaId.value) return
   try {

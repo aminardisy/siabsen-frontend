@@ -1,28 +1,25 @@
 <template>
-  <div class="p-6 bg-slate-50 min-h-screen">
+  <div class="p-6 bg-slate-50 min-h-screen text-left">
 
-    <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
       <div>
         <h1 class="text-2xl font-bold text-[#1A2342]">Dispensasi & Izin Siswa</h1>
         <p class="text-sm text-gray-400 mt-1">Pencatatan izin dan dispensasi harian</p>
       </div>
       <div class="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-        <span class="text-gray-400 text-sm font-medium">Tanggal</span>
+        <span class="text-gray-400 text-sm font-medium">Tanggal Operasional</span>
         <input
           type="date"
           v-model="selectedDate"
-          class="outline-none text-gray-700 bg-transparent cursor-pointer font-semibold"
+          class="outline-none text-gray-700 bg-transparent cursor-pointer font-semibold text-sm"
         />
       </div>
     </div>
 
     <div class="flex flex-col xl:flex-row gap-6">
 
-      <!-- ── LEFT: Form + Tabel ── -->
       <div class="flex-1 flex flex-col gap-6">
 
-        <!-- Search Siswa -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
           <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Cari Siswa</label>
           <div class="relative">
@@ -38,8 +35,7 @@
             <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
           </div>
 
-          <!-- Dropdown hasil search -->
-          <div v-if="searchQuery && filteredSiswa.length > 0" class="mt-2 border border-slate-200 rounded-xl overflow-hidden shadow-lg">
+          <div v-if="searchQuery && filteredSiswa.length > 0" class="mt-2 border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white z-20">
             <div
               v-for="siswa in filteredSiswa.slice(0, 5)"
               :key="siswa.id"
@@ -50,33 +46,27 @@
                 <p class="text-sm font-semibold text-[#1A2342]">{{ siswa.nama }}</p>
                 <p class="text-xs text-gray-400 font-mono">{{ siswa.nisn }}</p>
               </div>
-              <!-- PERBAIKAN: pakai namaKelas langsung, bukan kelas?.namaKelas -->
               <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-lg font-medium">{{ siswa.namaKelas }}</span>
             </div>
           </div>
 
-          <!-- Tidak ditemukan -->
           <div v-if="searchQuery && filteredSiswa.length === 0" class="mt-2 px-4 py-3 text-sm text-gray-400 text-center border border-slate-200 rounded-xl">
             Siswa tidak ditemukan
           </div>
 
-          <!-- Siswa terpilih -->
           <div v-if="selectedSiswa" class="mt-3 flex items-center justify-between bg-teal-50 border border-teal-200 rounded-xl px-4 py-3">
             <div>
               <p class="text-sm font-bold text-[#1A2342]">{{ selectedSiswa.nama }}</p>
-              <!-- PERBAIKAN: pakai namaKelas langsung -->
               <p class="text-xs text-gray-500 font-mono">{{ selectedSiswa.nisn }} · {{ selectedSiswa.namaKelas }}</p>
             </div>
-            <button @click="selectedSiswa = null; searchQuery = ''" class="text-xs text-red-400 hover:text-red-600 font-medium">Ganti</button>
+            <button @click="selectedSiswa = null; searchQuery = ''" class="text-xs text-red-400 hover:text-red-600 font-medium font-bold">Ganti</button>
           </div>
         </div>
 
-        <!-- Form Dispensasi -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
           <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Detail Dispensasi</label>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Tanggal Mulai -->
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tanggal Mulai <span class="text-red-400">*</span></label>
               <input
@@ -86,7 +76,6 @@
               />
             </div>
 
-            <!-- Tanggal Selesai -->
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tanggal Selesai <span class="text-red-400">*</span></label>
               <input
@@ -97,17 +86,16 @@
             </div>
           </div>
 
-          <!-- Jenis Keterangan -->
           <div class="mt-4">
             <label class="block text-xs font-semibold text-gray-500 mb-2">Jenis Keterangan <span class="text-red-400">*</span></label>
             <div class="flex gap-3">
               <label
                 v-for="opt in jenisOptions"
                 :key="opt.value"
-                class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 cursor-pointer font-semibold text-sm transition-all"
+                class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 cursor-pointer font-bold text-xs uppercase tracking-wider transition-all"
                 :class="form.type === opt.value
                   ? 'border-[#26A69A] bg-teal-50 text-[#26A69A]'
-                  : 'border-slate-200 text-slate-400 hover:border-slate-300'"
+                  : 'border-slate-100 text-slate-400 hover:border-slate-200'"
               >
                 <input type="radio" v-model="form.type" :value="opt.value" class="hidden" />
                 {{ opt.label }}
@@ -115,18 +103,16 @@
             </div>
           </div>
 
-          <!-- Alasan -->
           <div class="mt-4">
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Alasan <span class="text-red-400">*</span></label>
             <textarea
               v-model="form.alasan"
               rows="3"
               placeholder="Tuliskan alasan dispensasi..."
-              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition resize-none"
+              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition resize-none bg-gray-50"
             ></textarea>
           </div>
 
-          <!-- Link Dokumen -->
           <div class="mt-4">
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Link Dokumen Pendukung <span class="text-gray-400 font-normal">(opsional)</span></label>
             <input
@@ -137,13 +123,11 @@
             />
           </div>
 
-          <!-- Error -->
-          <div v-if="formError" class="mt-3 bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
+          <div v-if="formError" class="mt-3 bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl font-bold">
             {{ formError }}
           </div>
         </div>
 
-        <!-- Tombol Simpan -->
         <div class="flex justify-end">
           <button
             @click="openPreviewModal"
@@ -154,29 +138,28 @@
           </button>
         </div>
 
-        <!-- Tabel Riwayat Dispensasi -->
-      <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
           <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
             <div class="flex items-center justify-between mb-4">
               <h2 class="font-bold text-[#1A2342]">Riwayat Izin & Dispensasi</h2>
-              <span class="text-xs text-gray-400">{{ dispensasiStore.dispensasiList?.length || 0 }} data</span>
+              <span class="text-xs text-gray-400 font-semibold">{{ dispensasiStore.dispensasiList?.length || 0 }} data</span>
             </div>
 
             <div class="flex flex-wrap items-end gap-3 bg-white p-3 rounded-xl border border-slate-200">
               <div class="flex-1 min-w-[150px]">
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Filter Siswa</label>
-                <select v-model="filterSiswaId" class="w-full text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]">
+                <select v-model="filterSiswaId" class="w-full text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A] font-semibold text-slate-700">
                   <option :value="null">Semua Siswa</option>
                   <option v-for="s in allSiswa" :key="s.id" :value="s.id">{{ s.nama }} - {{ s.namaKelas }}</option>
                 </select>
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dari</label>
-                <input type="date" v-model="filterStartDate" class="text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]" />
+                <input type="date" v-model="filterStartDate" class="text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A] font-medium text-slate-700" />
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Sampai</label>
-                <input type="date" v-model="filterEndDate" class="text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A]" />
+                <input type="date" v-model="filterEndDate" class="text-sm border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#26A69A] font-medium text-slate-700" />
               </div>
               <button @click="fetchRiwayat" class="bg-[#1A2342] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 transition shadow-sm h-[38px]">
                 Filter
@@ -184,54 +167,42 @@
             </div>
           </div>
 
-          <div v-if="isLoadingRiwayat" class="p-12 text-center text-gray-400 text-sm animate-pulse">
+          <div v-if="isLoadingRiwayat" class="p-12 text-center text-gray-400 text-sm animate-pulse font-medium">
             Memuat data...
           </div>
 
           <table v-else class="w-full text-left">
-            <thead class="bg-[#1A2342] text-white">
+            <thead class="bg-[#1A2342] text-white text-[10px] font-bold uppercase tracking-wider">
               <tr>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Siswa</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Periode</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Alasan</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider">Jenis</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Status</th>
-                <th class="px-6 py-4 font-semibold uppercase text-[10px] tracking-wider text-center">Aksi</th>
+                <th class="px-6 py-4">Siswa</th>
+                <th class="px-6 py-4">Periode</th>
+                <th class="px-6 py-4">Alasan</th>
+                <th class="px-6 py-4 text-center">Jenis</th>
+                <th class="px-6 py-4 text-center">Status</th>
+                <th class="px-6 py-4 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr v-if="riwayatData.length === 0">
-                <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm">Tidak ada data dispensasi pada periode ini</td>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm font-medium">Tidak ada data dispensasi pada periode ini</td>
               </tr>
               <tr v-for="item in riwayatData" :key="item.id" class="hover:bg-slate-50/80 transition-colors">
                 <td class="px-6 py-4">
-                  <p class="font-semibold text-slate-700 text-sm">{{ item.siswaNama }}</p>
-                  <p class="text-xs text-gray-400 font-mono">{{ item.siswaNisn }}</p>
+                  <p class="font-bold text-slate-700 text-sm">{{ item.siswaNama }}</p>
+                  <p class="text-xs text-gray-400 font-mono mt-0.5">{{ item.siswaNisn }}</p>
                 </td>
-                <td class="px-6 py-4 text-sm text-slate-600 font-medium">
-                  {{ formatDate(item.tanggalMulai) }} <br><span class="text-gray-400 text-xs font-normal">s/d</span> <br> {{ formatDate(item.tanggalSelesai) }}
+                <td class="px-6 py-4 text-xs text-slate-600 font-semibold leading-relaxed">
+                  {{ formatDate(item.tanggalMulai) }} <br><span class="text-gray-400 font-normal">s/d</span> <br> {{ formatDate(item.tanggalSelesai) }}
                 </td>
                 <td class="px-6 py-4 max-w-[200px]">
-                  <div v-if="item.buktiDocUrl" class="mb-1">
-                    <a :href="item.buktiDocUrl" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-0.5 rounded transition-colors">
+                  <div v-if="item.buktiDocUrl" class="mb-1 text-left">
+                    <a :href="item.buktiDocUrl" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-black text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" /></svg>
                       Dokumen
                     </a>
                   </div>
                   <p class="text-xs text-slate-500 truncate" :title="item.alasan">{{ item.alasan }}</p>
                 </td>
-                <td class="px-6 py-4 text-center">
-                  <span
-                    :class="{
-                      'bg-blue-100 text-blue-600':     item.jenis === 'DISPENSASI',
-                      'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
-                      'bg-green-100 text-green-600':   item.jenis === 'IZIN',
-                    }"
-                    class="px-2.5 py-1 rounded-full text-[11px] font-bold"
-                  >
-                    {{ { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[item.jenis] || '-' }}
-                  </span>
-                </td>
 
                 <td class="px-6 py-4 text-center">
                   <span
@@ -240,22 +211,9 @@
                       'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
                       'bg-green-100 text-green-600':   item.jenis === 'IZIN',
                     }"
-                    class="px-2.5 py-1 rounded-full text-[11px] font-bold"
+                    class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide"
                   >
-                    {{ { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[item.jenis] || '-' }}
-                  </span>
-                </td>
-
-                <td class="px-6 py-4 text-center">
-                  <span
-                    :class="{
-                      'bg-blue-100 text-blue-600':     item.jenis === 'DISPENSASI',
-                      'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
-                      'bg-green-100 text-green-600':   item.jenis === 'IZIN',
-                    }"
-                    class="px-2.5 py-1 rounded-full text-[11px] font-bold"
-                  >
-                    {{ { DISPENSASI: 'Dispen', SAKIT: 'Sakit', IZIN: 'Izin' }[item.jenis] || '-' }}
+                    {{ item.jenis === 'DISPENSASI' ? 'Dispen' : item.jenis === 'SAKIT' ? 'Sakit' : 'Izin' }}
                   </span>
                 </td>
 
@@ -267,8 +225,6 @@
 
                 <td class="px-6 py-4 text-center">
                   <div class="flex items-center justify-center gap-2">
-
-                    <!-- Tombol Edit -->
                     <button
                       v-if="item.statusApproval !== 'CLOSED'"
                       @click="openEditModal(item)"
@@ -279,12 +235,11 @@
                       </svg>
                     </button>
 
-                    <!-- Dropdown Update Status (hanya jika bukan CLOSED) -->
                     <select
                       v-if="item.statusApproval !== 'CLOSED'"
                       @change="handleUpdateStatus(item.id, ($event.target as HTMLSelectElement).value)"
                       :value="item.statusApproval"
-                      class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[#26A69A] cursor-pointer font-semibold"
+                      class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[#26A69A] cursor-pointer font-bold"
                       :class="{
                         'text-yellow-600 bg-yellow-50': item.statusApproval === 'PENDING',
                         'text-green-600 bg-green-50':  item.statusApproval === 'APPROVED',
@@ -297,80 +252,75 @@
                       <option value="CLOSED">Closed</option>
                     </select>
 
-                    <span v-if="item.statusApproval === 'CLOSED'" class="text-xs text-gray-300 font-medium">Closed</span>
+                    <span v-if="item.statusApproval === 'CLOSED'" class="text-xs text-gray-300 font-bold select-none">Closed</span>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
-      </div>
+        </div>
       </div>
 
-      <!-- ── RIGHT: Kalender + Izin Aktif ── -->
       <div class="xl:w-72 flex flex-col gap-6">
 
-        <!-- Kalender -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <div class="flex items-center justify-between mb-4">
-            <button @click="prevMonth" class="text-gray-400 hover:text-[#26A69A] text-lg font-bold transition">‹</button>
-            <span class="text-sm font-bold text-[#1A2342]">{{ namabulan }} {{ tahunKalender }}</span>
-            <button @click="nextMonth" class="text-gray-400 hover:text-[#26A69A] text-lg font-bold transition">›</button>
+          <div class="flex items-center justify-between mb-4 select-none">
+            <button @click="prevMonth" class="text-gray-400 hover:text-[#26A69A] text-lg font-black transition">‹</button>
+            <span class="text-sm font-black text-[#1A2342]">{{ namabulan }} {{ tahunKalender }}</span>
+            <button @click="nextMonth" class="text-gray-400 hover:text-[#26A69A] text-lg font-black transition">›</button>
           </div>
-          <div class="grid grid-cols-7 gap-1 text-center">
+          <div class="grid grid-cols-7 gap-1 text-center select-none font-inter">
             <div v-for="h in hariSingkat" :key="h" class="text-[10px] font-bold text-gray-400 py-1">{{ h }}</div>
             <div v-for="(day, idx) in hariKalender" :key="idx"
-              class="py-1.5 text-xs rounded-lg cursor-pointer transition-colors"
+              class="py-1.5 text-xs rounded-lg transition-all"
               :class="{
-                'invisible': !day,
-                'bg-[#1A2342] text-white font-bold': day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni,
-                'bg-[#26A69A] text-white font-bold': day === hariDipilih && !(day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni),
-                'hover:bg-slate-100 text-slate-600': day && day !== hariIni && day !== hariDipilih
-              }"
-              @click="day && pilihHari(day)"
+              'invisible': !day,
+              'bg-[#26A69A] text-white font-black shadow-lg shadow-teal-100 cursor-default': day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni,
+              'text-slate-400 font-semibold cursor-not-allowed': day && !(day === hariIni && bulanKalender === bulanIni && tahunKalender === tahunIni)
+            }"
             >
               {{ day || '' }}
             </div>
           </div>
         </div>
 
-        <!-- Izin Aktif Hari Ini -->
-       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex-1 min-h-[300px]">
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-          Izin Aktif: {{ formatDate(selectedDate) }}
-        </h3>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex-1 min-h-[300px]">
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+            Izin Aktif Hari Ini: {{ formatDate(hariIniTanggalMurni) }}
+          </h3>
 
-        <div v-if="izinAktifSesuaiTanggal.length === 0" class="py-12 text-center text-gray-400 text-sm">
-          <div class="mb-2">📅</div>
-          Tidak ada izin/dispensasi aktif<br>pada tanggal ini.
-        </div>
+          <div v-if="izinAktifHariIniMurni.length === 0" class="py-12 text-center text-gray-400 text-xs font-medium leading-relaxed">
+            <div class="text-3xl mb-2.5">📅</div>
+            Tidak ada siswa izin/dispensasi<br>aktif pada hari ini.
+          </div>
 
-        <div class="space-y-3">
-          <div
-            v-for="item in izinAktifSesuaiTanggal"
-            :key="item.id"
-            class="flex items-center justify-between py-3 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 transition-colors px-2 rounded-lg"
-          >
-            <div>
-              <p class="text-sm font-bold text-[#1A2342]">{{ item.siswaNama }}</p>
-              <p class="text-[10px] text-gray-400 font-mono">{{ item.siswaNisn }} · {{ item.jenis }}</p>
-            </div>
-            <span
-              :class="{
-                'bg-blue-100 text-blue-600': item.jenis === 'DISPENSASI',
-                'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
-                'bg-green-100 text-green-600': item.jenis === 'IZIN',
-              }"
-              class="text-[10px] font-black px-2 py-1 rounded-md uppercase"
+          <div v-else class="space-y-3 max-h-[350px] overflow-y-auto pr-1 text-left">
+            <div
+              v-for="item in izinAktifHariIniMurni"
+              :key="item.id"
+              class="flex items-center justify-between py-3 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 transition-colors px-2 rounded-lg"
             >
-              {{ jenisLabel(item.jenis) }}
-            </span>
+              <div class="text-left">
+                <p class="text-sm font-bold text-[#1A2342] truncate max-w-[140px]">{{ item.siswaNama }}</p>
+                <p class="text-[10px] text-gray-400 font-mono mt-0.5">{{ item.siswaNisn }}</p>
+              </div>
+              <span
+                :class="{
+                  'bg-blue-100 text-blue-600': item.jenis === 'DISPENSASI',
+                  'bg-yellow-100 text-yellow-600': item.jenis === 'SAKIT',
+                  'bg-green-100 text-green-600': item.jenis === 'IZIN',
+                }"
+                class="text-[9px] font-black px-2.5 py-0.5 rounded uppercase tracking-wide"
+              >
+                {{ item.jenis === 'DISPENSASI' ? 'Dispen' : item.jenis === 'SAKIT' ? 'Sakit' : 'Izin' }}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+
       </div>
     </div>
 
-    <!-- ── Modal Preview (ATD-07) ── -->
     <div v-if="showPreviewModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div class="px-6 py-5 border-b border-slate-100">
@@ -388,7 +338,6 @@
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-gray-400 font-medium">Kelas</span>
-            <!-- PERBAIKAN: pakai namaKelas langsung -->
             <span class="text-slate-600">{{ selectedSiswa?.namaKelas }}</span>
           </div>
           <div class="flex justify-between text-sm">
@@ -403,27 +352,14 @@
             <span class="text-gray-400 font-medium">Alasan</span>
             <span class="text-slate-600 text-right max-w-[60%]">{{ form.alasan }}</span>
           </div>
-          <div v-if="form.buktiDocUrl" class="flex justify-between text-sm">
-            <span class="text-gray-400 font-medium">Dokumen</span>
-            <span class="text-[#26A69A] text-right max-w-[60%] break-all text-xs">{{ form.buktiDocUrl }}</span>
-          </div>
         </div>
         <div class="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
-          <button @click="showPreviewModal = false" class="px-5 py-2 border border-slate-200 rounded-xl text-sm text-slate-600 hover:bg-slate-50 font-semibold transition">
-            Batal
-          </button>
-          <button
-            @click="submitCreate"
-            :disabled="dispensasiStore.isLoading"
-            class="px-6 py-2 bg-[#1A2342] text-white rounded-xl text-sm font-bold hover:bg-[#26A69A] transition disabled:opacity-50"
-          >
-            {{ dispensasiStore.isLoading ? 'Menyimpan...' : 'Konfirmasi & Simpan' }}
-          </button>
+          <button @click="showPreviewModal = false" class="px-5 py-2 border border-slate-200 rounded-xl text-sm text-slate-600 hover:bg-slate-50 font-semibold transition">Batal</button>
+          <button @click="submitCreate" :disabled="dispensasiStore.isLoading" class="px-6 py-2 bg-[#1A2342] text-white rounded-xl text-sm font-bold hover:bg-[#26A69A] transition disabled:opacity-50">Konfirmasi & Simpan</button>
         </div>
       </div>
     </div>
 
-    <!-- ── Modal Edit (ATD-09) ── -->
     <div v-if="showEditModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div class="px-6 py-5 border-b border-slate-100">
@@ -432,88 +368,32 @@
         </div>
         <div class="px-6 py-5 space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Siswa <span class="text-gray-400 font-normal">(tidak dapat diubah)</span></label>
-            <input
-              type="text"
-              :value="editTarget?.siswaNama"
-              disabled
-              class="w-full border border-slate-100 bg-slate-50 rounded-xl px-3 py-2.5 text-sm text-gray-400 cursor-not-allowed"
-            />
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Siswa</label>
+            <input type="text" :value="editTarget?.siswaNama" disabled class="w-full border border-slate-100 bg-slate-50 rounded-xl px-3 py-2.5 text-sm text-gray-400 cursor-not-allowed" />
           </div>
-
-          <div v-if="editTarget?.statusApproval === 'CLOSED'" class="bg-amber-50 border border-amber-200 text-amber-700 text-sm px-4 py-3 rounded-xl flex items-center gap-2">
-            <span>⚠</span>
-            <span>Dispensasi ini sudah <strong>closed</strong> dan tidak dapat diubah.</span>
-          </div>
-
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tanggal Mulai <span class="text-red-400">*</span></label>
-            <input
-              type="date"
-              v-model="editForm.tanggalMulai"
-              :disabled="editTarget?.statusApproval === 'CLOSED'"
-              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition disabled:bg-slate-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-            />
+            <input type="date" v-model="editForm.tanggalMulai" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A]" />
           </div>
-
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tanggal Selesai <span class="text-red-400">*</span></label>
-            <input
-              type="date"
-              v-model="editForm.tanggalSelesai"
-              :disabled="editTarget?.statusApproval === 'CLOSED'"
-              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition disabled:bg-slate-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-            />
+            <input type="date" v-model="editForm.tanggalSelesai" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A]" />
           </div>
-
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Alasan <span class="text-red-400">*</span></label>
-            <textarea
-              v-model="editForm.alasan"
-              rows="3"
-              :disabled="editTarget?.statusApproval === 'CLOSED'"
-              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition resize-none disabled:bg-slate-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-            ></textarea>
+            <textarea v-model="editForm.alasan" rows="3" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] resize-none"></textarea>
           </div>
-
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Upload Ulang Dokumen <span class="text-gray-400 font-normal">(opsional)</span></label>
-            <input
-              type="url"
-              v-model="editForm.buktiDocUrl"
-              placeholder="https://drive.google.com/..."
-              :disabled="editTarget?.statusApproval === 'CLOSED'"
-              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition disabled:bg-slate-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-            />
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Upload Ulang Dokumen</label>
+            <input type="url" v-model="editForm.buktiDocUrl" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A]" />
           </div>
-
-          <div v-if="editError" class="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
-            {{ editError }}
-          </div>
+          <div v-if="editError" class="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl font-bold">{{ editError }}</div>
         </div>
-
         <div class="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
-          <button @click="showEditModal = false; editError = ''" class="px-5 py-2 border border-slate-200 rounded-xl text-sm text-slate-600 hover:bg-slate-50 font-semibold transition">
-            Batal
-          </button>
-          <button
-            @click="submitEdit"
-            :disabled="dispensasiStore.isLoading || editTarget?.statusApproval === 'CLOSED'"
-            class="px-6 py-2 bg-[#1A2342] text-white rounded-xl text-sm font-bold hover:bg-[#26A69A] transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ dispensasiStore.isLoading ? 'Menyimpan...' : 'Simpan Perubahan' }}
-          </button>
+          <button @click="showEditModal = false; editError = ''" class="px-5 py-2 border border-slate-200 rounded-xl text-sm text-slate-600 hover:bg-slate-50 font-semibold transition">Batal</button>
+          <button @click="submitEdit" :disabled="dispensasiStore.isLoading" class="px-6 py-2 bg-[#1A2342] text-white rounded-xl text-sm font-bold hover:bg-[#26A69A] transition">Simpan Perubahan</button>
         </div>
       </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div
-      v-if="toast.show"
-      class="fixed bottom-6 right-6 z-[100] px-5 py-3.5 rounded-xl font-semibold text-sm shadow-xl transition-all"
-      :class="toast.type === 'success' ? 'bg-[#26A69A] text-white' : 'bg-red-500 text-white'"
-    >
-      {{ toast.message }}
     </div>
 
   </div>
@@ -535,26 +415,29 @@ const selectedSiswa = ref<SiswaResponse | null>(null)
 const searchQuery = ref('')
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
 
-// ── State Riwayat Table (ATD-08) ──
-const today = new Date().toISOString().slice(0, 10)
-const filterStartDate = ref(today)
-const filterEndDate = ref(today)
+// ── State Riwayat Table (Rentang Waktu Awal Bulan s/d Hari Ini) ──
+const nowTime = new Date()
+const todayStr = nowTime.toISOString().slice(0, 10)
+const firstDayStr = new Date(nowTime.getFullYear(), nowTime.getMonth(), 1).toISOString().slice(0, 10)
+
+const filterStartDate = ref(firstDayStr)
+const filterEndDate = ref(todayStr)
 const filterSiswaId = ref<number | null>(null)
 const riwayatData = ref<Dispensasi[]>([])
 const isLoadingRiwayat = ref(false)
 
 // ── State Form Create ──
 const form = ref({
-  type: 'IZIN' as 'DISPENSASI' | 'SAKIT' | 'IZIN', // Disimpan agar UI tidak error
-  tanggalMulai: today,
-  tanggalSelesai: today,
+  type: 'IZIN' as 'DISPENSASI' | 'SAKIT' | 'IZIN',
+  tanggalMulai: todayStr,
+  tanggalSelesai: todayStr,
   alasan: '',
   buktiDocUrl: ''
 })
 const formError = ref('')
 const showPreviewModal = ref(false)
 
-// ── State Form Edit (ATD-09) ──
+// ── State Form Edit ──
 const showEditModal = ref(false)
 const editTarget = ref<Dispensasi | null>(null)
 const editForm = ref({ tanggalMulai: '', tanggalSelesai: '', alasan: '', buktiDocUrl: '' })
@@ -563,14 +446,20 @@ const editError = ref('')
 const toast = ref({ show: false, message: '', type: 'success' })
 
 // ── State Kalender ──
-const now = new Date()
-const bulanKalender = ref(now.getMonth())
-const tahunKalender = ref(now.getFullYear())
-const hariIni = now.getDate()
-const hariDipilih = ref(now.getDate())
-const bulanIni = now.getMonth()
-const tahunIni = now.getFullYear()
+const bulanKalender = ref(nowTime.getMonth())
+const tahunKalender = ref(nowTime.getFullYear())
+const hariIni = nowTime.getDate()
+const bulanIni = nowTime.getMonth()
+const tahunIni = nowTime.getFullYear()
 const hariSingkat = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+// FIX MUTLAK: String tanggal murni hari ini (2026-06-06) agar list kanan terisolasi total
+const hariIniTanggalMurni = computed(() => {
+  const yyyy = nowTime.getFullYear()
+  const mm = String(nowTime.getMonth() + 1).padStart(2, '0')
+  const dd = String(nowTime.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+})
 
 const jenisOptions = [
   { value: 'DISPENSASI', label: 'Dispen' },
@@ -583,7 +472,7 @@ const filteredSiswa = computed(() => {
   if (!searchQuery.value) return []
   const q = searchQuery.value.toLowerCase()
   return allSiswa.value.filter(
-    s => s.nama.toLowerCase().includes(q) || s.nisn?.includes(q)
+    s => (s.nama?.toLowerCase().includes(q) || s.nisn?.includes(q))
   )
 })
 
@@ -598,6 +487,33 @@ const hariKalender = computed(() => {
   return days
 })
 
+// FIX INTEGRITAS FILTER: Membongkar data array murni store dan mengecek rentang aktif khusus HARI INI saja
+const izinAktifHariIniMurni = computed(() => {
+  const target = hariIniTanggalMurni.value // Mengunci target murni hari ini
+  const rawList = dispensasiStore.dispensasiList
+
+  let listValid = []
+  if (Array.isArray(rawList)) {
+    listValid = rawList
+  } else if (rawList && typeof rawList === 'object') {
+    listValid = (rawList as any).data?.data || (rawList as any).data || []
+  }
+
+  return listValid.filter((item: any) => {
+    if (!item.tanggalMulai || !item.tanggalSelesai) return false
+
+    // Hanya tampilkan status APPROVED (atau PENDING jika ingin ikut terpantau langsung)
+    const cocokStatus = item.statusApproval === 'APPROVED'
+
+    // Potong substring murni 10 karakter pertama (YYYY-MM-DD) dari database
+    const tglMulai = item.tanggalMulai.substring(0, 10)
+    const tglSelesai = item.tanggalSelesai.substring(0, 10)
+
+    const dalamRentangTanggal = target >= tglMulai && target <= tglSelesai
+    return cocokStatus && dalamRentangTanggal
+  })
+})
+
 // ── Methods Fetching ──
 const fetchSiswa = async () => {
   try {
@@ -608,7 +524,6 @@ const fetchSiswa = async () => {
   }
 }
 
-// ATD-08 Fetch Data berdasarkan filter params
 const fetchRiwayat = async () => {
   isLoadingRiwayat.value = true
   try {
@@ -616,7 +531,7 @@ const fetchRiwayat = async () => {
     if (filterSiswaId.value) params.siswaId = filterSiswaId.value
 
     const res = await api.get('/dispensasi', { params })
-    riwayatData.value = res.data.data || []
+    riwayatData.value = res.data.data || res.data || []
   } catch (error) {
     console.error('Gagal mengambil riwayat', error)
   } finally {
@@ -624,57 +539,18 @@ const fetchRiwayat = async () => {
   }
 }
 
-// ── Methods Form & Actions ──
+// ── Methods Form Actions ──
 const pilihSiswa = (siswa: SiswaResponse) => {
   selectedSiswa.value = siswa
   searchQuery.value = ''
   formError.value = ''
 }
 
-const pilihHari = (day: number) => {
-  hariDipilih.value = day
-  const d = new Date(tahunKalender.value, bulanKalender.value, day)
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset()) // Sync timezone
-  selectedDate.value = d.toISOString().slice(0, 10)
-}
-
-watch(selectedDate, (newDate) => {
-  if (!newDate) return
-  const d = new Date(newDate)
-  hariDipilih.value = d.getDate()
-  bulanKalender.value = d.getMonth()
-  tahunKalender.value = d.getFullYear()
-})
-
-const izinAktifSesuaiTanggal = computed(() => {
-  const target = selectedDate.value // Format: YYYY-MM-DD
-  if (!target) return []
-
-  return dispensasiStore.dispensasiList.filter(item => {
-    // Hanya tampilkan yang sudah disetujui (Approved)
-    // Dan tanggal yang dipilih berada di dalam rentang izin
-    return (
-      item.statusApproval === 'APPROVED' &&
-      target >= item.tanggalMulai &&
-      target <= item.tanggalSelesai
-    )
-  })
-})
-
-const prevMonth = () => {
-  if (bulanKalender.value === 0) { bulanKalender.value = 11; tahunKalender.value-- }
-  else bulanKalender.value--
-}
-
-const nextMonth = () => {
-  if (bulanKalender.value === 11) { bulanKalender.value = 0; tahunKalender.value++ }
-  else bulanKalender.value++
-}
-
 const openPreviewModal = () => {
   formError.value = ''
   if (!selectedSiswa.value) { formError.value = 'Pilih siswa terlebih dahulu.'; return }
   if (!form.value.tanggalMulai || !form.value.tanggalSelesai) { formError.value = 'Tanggal wajib diisi.'; return }
+  if (form.value.tanggalSelesai < form.value.tanggalMulai) { formError.value = 'Tanggal selesai tidak boleh mendahului tanggal mulai.'; return }
   if (!form.value.alasan.trim()) { formError.value = 'Alasan wajib diisi.'; return }
   showPreviewModal.value = true
 }
@@ -694,7 +570,7 @@ const submitCreate = async () => {
     resetForm()
 
     fetchRiwayat()
-    dispensasiStore.fetchToday()
+    dispensasiStore.fetchAll() // Refresh data list store secara asinkron
   } catch (e: any) {
     showPreviewModal.value = false
     showToast(e.response?.data?.message || 'Gagal menyimpan dispensasi', 'error')
@@ -704,7 +580,7 @@ const submitCreate = async () => {
 const resetForm = () => {
   selectedSiswa.value = null
   searchQuery.value = ''
-  form.value = { type: 'IZIN', tanggalMulai: today, tanggalSelesai: today, alasan: '', buktiDocUrl: '' }
+  form.value = { type: 'IZIN', tanggalMulai: todayStr, tanggalSelesai: todayStr, alasan: '', buktiDocUrl: '' }
 }
 
 const openEditModal = (item: Dispensasi) => {
@@ -735,29 +611,38 @@ const submitEdit = async () => {
     showEditModal.value = false
     showToast('Dispensasi berhasil diperbarui!', 'success')
 
-    // Refresh
     fetchRiwayat()
-    dispensasiStore.fetchToday()
+    dispensasiStore.fetchAll()
   } catch (e: any) {
     editError.value = e.response?.data?.message || 'Gagal mengupdate data'
   }
 }
 
-// Update status dispensasi
 const handleUpdateStatus = async (id: number, status: string) => {
   if (!status) return
   try {
     await dispensasiStore.updateStatus(id, status)
     showToast(`Status berhasil diubah ke ${status}`, 'success')
+    fetchRiwayat()
+    dispensasiStore.fetchAll() // Pemicu pembaruan list kanan otomatis setelah approve diubah
   } catch (e: any) {
     showToast(e.response?.data?.message || 'Gagal mengubah status', 'error')
   }
 }
 
-// ── Helpers Visual ──
+const prevMonth = () => {
+  if (bulanKalender.value === 0) { bulanKalender.value = 11; tahunKalender.value-- }
+  else bulanKalender.value--
+}
+
+const nextMonth = () => {
+  if (bulanKalender.value === 11) { bulanKalender.value = 0; tahunKalender.value++ }
+  else bulanKalender.value++
+}
+
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(`${dateStr}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 const badgeClass = (status: string) => {
@@ -770,16 +655,11 @@ const badgeClass = (status: string) => {
   return map[status] || 'text-slate-500 border-slate-200'
 }
 
-// Karena 'jenis' sudah dihilangkan dari model, kita mapping fallback statusApproval agar template tidak crash
-const jenisBadgeClass = (status: string) => badgeClass(status)
-const jenisLabel = (status: string) => status
-
 const showToast = (message: string, type: 'success' | 'error') => {
   toast.value = { show: true, message, type }
   setTimeout(() => { toast.value.show = false }, 3500)
 }
 
-// ── Lifecycle ──
 onMounted(async () => {
   isLoadingRiwayat.value = true
   try {
@@ -795,3 +675,7 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.font-inter { font-family: 'Inter', sans-serif; }
+</style>

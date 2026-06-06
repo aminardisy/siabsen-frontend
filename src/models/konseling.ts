@@ -8,7 +8,7 @@ export interface SiswaWajibKonseling {
   name: string
   kelas: string
   totalLate: number
-  totalAlpha: number 
+  totalAlpha: number
 }
 
 export interface RiwayatKonseling {
@@ -18,6 +18,9 @@ export interface RiwayatKonseling {
   siswaNisn: string
   waliKelasNama: string
   date: string
+  waktuMulai: string
+  waktuSelesai: string
+  tempat: string
   topic: string
   jenisPelanggaran: string | null
   catatanAwal: string | null
@@ -32,6 +35,9 @@ export interface KonselingDetail extends RiwayatKonseling {}
 export interface CreateKonselingPayload {
   studentId: number
   date: string
+  waktuMulai: string
+  waktuSelesai: string
+  tempat: string
   topic: string
   violationType?: string
   initialNotes?: string
@@ -42,6 +48,9 @@ export interface UpdateKonselingPayload {
   topic?: string
   violationType?: string
   initialNotes?: string
+  waktuMulai?: string
+  waktuSelesai?: string
+  tempat: string
 }
 
 /** Status hasil di API (request/response) */

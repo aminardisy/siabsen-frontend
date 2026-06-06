@@ -5,8 +5,8 @@ import type {
   SiswaWajibKonseling,
   RiwayatKonseling,
   KonselingDetail,
-  CreateKonselingPayload,
-  UpdateKonselingPayload,
+  CreateKonselingPayload, // Pastikan interface ini di models/konseling.ts sudah ada waktuMulai, waktuSelesai, tempat
+  UpdateKonselingPayload, // Pastikan interface ini di models/konseling.ts sudah ada waktuMulai, waktuSelesai, tempat
   CatatHasilKonselingRequest,
   CatatHasilKonselingResponse,
   KonselingDetailResponse,
@@ -25,7 +25,7 @@ export const getSiswaWajibKonseling = async (
   return res.data.data || []
 }
 
-// PK-02: Buat jadwal konseling
+// PK-02: Buat jadwal konseling baru (Payload membawa date, waktuMulai, waktuSelesai, tempat)
 export const createKonseling = async (
   payload: CreateKonselingPayload
 ): Promise<KonselingDetail> => {
@@ -33,7 +33,7 @@ export const createKonseling = async (
   return res.data.data
 }
 
-// PK-04: Riwayat konseling (optional filter per siswa)
+// PK-04: Riwayat konseling (Akan menerima data array objek riwayat yang membawa data jam & tempat)
 export const getRiwayatKonseling = async (
   studentId?: number,
   startDate?: string,
@@ -47,7 +47,7 @@ export const getRiwayatKonseling = async (
   return res.data.data || []
 }
 
-// PK-05: Update jadwal konseling
+// PK-05: Update jadwal konseling (Payload membawa data jam & tempat opsional yang ingin diedit)
 export const updateKonseling = async (
   id: number,
   payload: UpdateKonselingPayload

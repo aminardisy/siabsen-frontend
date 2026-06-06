@@ -144,7 +144,7 @@
       </SidebarItem>
 
       <SidebarItem
-        v-if="['GURU', 'ADMIN', 'KESISWAAN', 'PIKET'].includes(authStore.user?.role)"
+        v-if="[ 'ADMIN', 'KESISWAAN', 'PIKET'].includes(authStore.user?.role)"
         to="/dispensasi"
         label="Dispensasi & Izin"
         :active="route.path.startsWith('/dispensasi')"

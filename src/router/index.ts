@@ -27,7 +27,7 @@ const router = createRouter({
       path: '/data-siswa',
       name: 'data-siswa',
       component: () => import('../views/SiswaListView.vue'),
-      meta: { requiresAuth: true, role: ['ADMIN', 'GURU'] },
+      meta: { requiresAuth: true, role: ['ADMIN'] },
     },
     {
       path: '/data-guru',
@@ -98,7 +98,7 @@ const router = createRouter({
       path: '/dispensasi',
       name: 'dispensasi',
       component: () => import('@/views/DispensasiView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, role: ['ADMIN', 'PIKET']  },
     },
     {
       path: '/rekap',

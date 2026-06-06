@@ -66,7 +66,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-          Buat Konseling Mandiri
+          Buat Jadwal Mandiri
         </button>
       </div>
     </div>
@@ -235,7 +235,7 @@
           <thead class="bg-[#1A2342] text-white text-xs uppercase tracking-wider">
             <tr>
               <th class="px-6 py-4 font-semibold text-[10px]">Siswa</th>
-              <th class="px-6 py-4 font-semibold text-[10px]">Tanggal</th>
+              <th class="px-6 py-4 font-semibold text-[10px]">Waktu & Ruangan</th>
               <th class="px-6 py-4 font-semibold text-[10px]">Topik Bimbingan</th>
               <th class="px-6 py-4 font-semibold text-[10px]">Jenis Pelanggaran</th>
               <th class="px-6 py-4 font-semibold text-[10px] text-center">Status</th>
@@ -249,7 +249,11 @@
                 <p class="font-bold text-slate-700 text-sm">{{ item.siswaNama }}</p>
                 <p class="text-xs text-gray-400 font-mono mt-0.5">{{ item.siswaNisn }}</p>
               </td>
-              <td class="px-6 py-4 text-sm text-slate-600 font-medium">{{ formatDate(item.date) }}</td>
+              <td class="px-6 py-4 text-xs text-slate-600 font-semibold leading-relaxed">
+                <p class="text-slate-700 font-bold">{{ formatDate(item.date) }}</p>
+                <p class="text-gray-400 font-mono text-[11px] mt-0.5">⏱ {{ item.waktuMulai ? item.waktuMulai.slice(0, 5) : '00:00' }} - {{ item.waktuSelesai ? item.waktuSelesai.slice(0, 5) : '00:00' }}</p>
+                <p class="text-teal-600 font-bold text-[11px] mt-0.5">📍 {{ item.tempat || '-' }}</p>
+              </td>
               <td class="px-6 py-4 text-sm text-slate-600 max-w-[200px] truncate font-medium" :title="item.topic">{{ item.topic }}</td>
               <td class="px-6 py-4 text-sm text-slate-500 font-semibold">{{ item.jenisPelanggaran || '-' }}</td>
               <td class="px-6 py-4 text-center">
@@ -324,7 +328,7 @@
               </div>
             </div>
 
-            <div class="bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 flex justify-between items-center">
+            <div v-if="createTarget" class="bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 flex justify-between items-center">
               <div>
                 <p class="text-sm font-black text-[#1A2342]">{{ createTarget?.name }}</p>
                 <p class="text-xs text-slate-500 font-mono mt-0.5">{{ createTarget?.nisn }} · {{ createTarget?.kelas }}</p>
@@ -336,6 +340,22 @@
           <div>
             <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Tanggal Konseling <span class="text-red-400">*</span></label>
             <input type="date" v-model="createForm.date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-600" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Jam Mulai <span class="text-red-400">*</span></label>
+              <input type="time" v-model="createForm.waktuMulai" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Jam Selesai <span class="text-red-400">*</span></label>
+              <input type="time" v-model="createForm.waktuSelesai" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-600" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Tempat / Ruang Pertemuan <span class="text-red-400">*</span></label>
+            <input type="text" v-model="createForm.tempat" placeholder="Contoh: Ruang BK Utama / Kelas X-1" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-700" />
           </div>
 
           <div>
@@ -391,6 +411,22 @@
           <div>
             <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Tanggal</label>
             <input type="date" v-model="editForm.date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-600" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Jam Mulai <span class="text-red-400">*</span></label>
+              <input type="time" v-model="editForm.waktuMulai" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Jam Selesai <span class="text-red-400">*</span></label>
+              <input type="time" v-model="editForm.waktuSelesai" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-600" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase ml-1 mb-1">Tempat / Ruang Pertemuan <span class="text-red-400">*</span></label>
+            <input type="text" v-model="editForm.tempat" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-700" />
           </div>
 
           <div>

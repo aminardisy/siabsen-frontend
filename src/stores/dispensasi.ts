@@ -17,7 +17,10 @@ export const useDispensasiStore = defineStore('dispensasi', () => {
     isLoading.value = true
     error.value = null
     try {
-      dispensasiList.value = await dispensasiService.getAllDispensasi()
+      const res = await dispensasiService.getAllDispensasi()
+      // FIX: Bongkar paksa bungkusan data berlapis agar terjamin berupa array murni
+      const dataArray = Array.isArray(res) ? res : (res as any).data?.data || (res as any).data || []
+      dispensasiList.value = dataArray
     } catch (e: any) {
       error.value = e.response?.data?.message || 'Gagal memuat data dispensasi'
     } finally {
@@ -25,10 +28,13 @@ export const useDispensasiStore = defineStore('dispensasi', () => {
     }
   }
 
-  // Fetch izin aktif hari ini (untuk panel kanan)
+  // Fetch izin aktif hari ini
   const fetchToday = async () => {
     try {
-      izinAktifHariIni.value = await dispensasiService.getDispensasiToday()
+      const res = await dispensasiService.getDispensasiToday()
+      // FIX: Gunakan saringan array murni yang sama
+      const dataArray = Array.isArray(res) ? res : (res as any).data?.data || (res as any).data || []
+      izinAktifHariIni.value = dataArray
     } catch {
       izinAktifHariIni.value = []
     }
@@ -39,7 +45,13 @@ export const useDispensasiStore = defineStore('dispensasi', () => {
     isLoading.value = true
     error.value = null
     try {
-      const newData = await dispensasiService.createDispensasi(payload)
+      const res = await dispensasiService.createDispensasi(payload)
+      const newData = (res as any).data?.data || (res as any).data || res
+
+      if (!Array.isArray(dispensasiList.value)) {
+        dispensasiList.value = []
+      }
+
       dispensasiList.value.unshift(newData)
       await fetchToday()
     } catch (e: any) {
@@ -55,7 +67,14 @@ export const useDispensasiStore = defineStore('dispensasi', () => {
     isLoading.value = true
     error.value = null
     try {
-      const updated = await dispensasiService.updateDispensasi(id, payload)
+      const res = await dispensasiService.updateDispensasi(id, payload)
+      // FIX: Normalisasi data response
+      const updated = (res as any).data?.data || (res as any).data || res
+
+      if (!Array.isArray(dispensasiList.value)) {
+        dispensasiList.value = []
+      }
+
       const idx = dispensasiList.value.findIndex(d => d.id === id)
       if (idx !== -1) dispensasiList.value[idx] = updated
       await fetchToday()
@@ -67,12 +86,17 @@ export const useDispensasiStore = defineStore('dispensasi', () => {
     }
   }
 
-  // Tambah method ini di dalam store
   const updateStatus = async (id: number, status: string): Promise<void> => {
     isLoading.value = true
     error.value = null
     try {
-      const updated = await updateStatusDispensasi(id, status)
+      const res = await updateStatusDispensasi(id, status)
+      const updated = (res as any).data?.data || (res as any).data || res
+
+      if (!Array.isArray(dispensasiList.value)) {
+        dispensasiList.value = []
+      }
+
       const idx = dispensasiList.value.findIndex(d => d.id === id)
       if (idx !== -1) dispensasiList.value[idx] = updated
       await fetchToday()

@@ -33,14 +33,14 @@ export const useKonselingStore = defineStore('konseling', () => {
   // ── State Modal Create ──
   const showCreateModal = ref(false)
   const createTarget = ref<SiswaWajibKonseling | null>(null)
-  const createForm = ref({ date: '', topic: '', violationType: '', initialNotes: '' })
+  const createForm = ref({ date: '', waktuMulai: '', waktuSelesai: '', tempat: '', topic: '', violationType: '', initialNotes: '' })
   const createError = ref('')
   const isSubmitting = ref(false)
 
   // ── State Modal Edit ──
   const showEditModal = ref(false)
   const editTarget = ref<RiwayatKonseling | null>(null)
-  const editForm = ref({ date: '', topic: '', violationType: '', initialNotes: '' })
+  const editForm = ref({ date: '', waktuMulai: '', waktuSelesai: '', tempat: '', topic: '', violationType: '', initialNotes: '' })
   const editError = ref('')
 
   // ── State Custom Local Toast ──
@@ -150,35 +150,25 @@ export const useKonselingStore = defineStore('konseling', () => {
   const openCreateModal = (item?: SiswaWajibKonseling) => {
     fetchAllSiswa()
     searchQuery.value = ''
+    const today = new Date().toISOString().slice(0, 10)
 
     if (item) {
       createTarget.value = item
-
       const isAlpha = item.totalAlpha >= 3 && item.totalAlpha >= item.totalLate
       const isBoth = item.totalLate >= 3 && item.totalAlpha >= 3
 
       createForm.value = {
-        date: new Date().toISOString().slice(0, 10),
-        topic: isBoth
-          ? 'Keterlambatan & Alpha berulang'
-          : isAlpha
-            ? 'Alpha berulang'
-            : 'Keterlambatan berulang',
+        date: today,
+        waktuMulai: '08:00', // default jam mulai
+        waktuSelesai: '09:00', // default jam selesai
+        tempat: '',
+        topic: isBoth ? 'Keterlambatan & Alpha berulang' : isAlpha ? 'Alpha berulang' : 'Keterlambatan berulang',
         violationType: isBoth ? 'TERLAMBAT, ALPHA' : isAlpha ? 'ALPHA' : 'TERLAMBAT',
-        initialNotes: isBoth
-          ? `Siswa terlambat ${item.totalLate}x dan alpha ${item.totalAlpha}x bulan ini.`
-          : isAlpha
-            ? `Siswa alpha ${item.totalAlpha}x bulan ini.`
-            : `Siswa terlambat ${item.totalLate}x bulan ini.`,
+        initialNotes: isBoth ? `Siswa terlambat ${item.totalLate}x dan alpha ${item.totalAlpha}x bulan ini.` : isAlpha ? `Siswa alpha ${item.totalAlpha}x bulan ini.` : `Siswa terlambat ${item.totalLate}x bulan ini.`,
       }
     } else {
       createTarget.value = null
-      createForm.value = {
-        date: new Date().toISOString().slice(0, 10),
-        topic: '',
-        violationType: '',
-        initialNotes: '',
-      }
+      createForm.value = { date: today, waktuMulai: '', waktuSelesai: '', tempat: '', topic: '', violationType: '', initialNotes: '' }
     }
     createError.value = ''
     showCreateModal.value = true
@@ -211,29 +201,35 @@ export const useKonselingStore = defineStore('konseling', () => {
   const closeCreateModal = () => {
     showCreateModal.value = false
     createTarget.value = null
-    createForm.value = { date: '', topic: '', violationType: '', initialNotes: '' }
+    createForm.value = { date: '', waktuMulai: '', waktuSelesai: '', tempat: '', topic: '', violationType: '', initialNotes: '' }
     createError.value = ''
   }
 
   const submitCreate = async () => {
-    if (!createForm.value.date || !createForm.value.topic.trim()) {
-      createError.value = 'Tanggal dan topik wajib diisi.'
+    // FIX: Tambahkan validasi jam dan tempat wajib diisi
+    if (!createForm.value.date || !createForm.value.waktuMulai || !createForm.value.waktuSelesai || !createForm.value.tempat.trim() || !createForm.value.topic.trim()) {
+      createError.value = 'Semua data bertanda bintang wajib diisi.'
+      return
+    }
+    if (createForm.value.waktuSelesai <= createForm.value.waktuMulai) {
+      createError.value = 'Waktu selesai tidak boleh mendahului waktu mulai.'
       return
     }
 
     isSubmitting.value = true
     try {
-      const payload: CreateKonselingPayload = {
+      await createKonseling({
         studentId: createTarget.value!.studentId,
         date: createForm.value.date,
+        waktuMulai: createForm.value.waktuMulai,
+        waktuSelesai: createForm.value.waktuSelesai,
+        tempat: createForm.value.tempat.trim(),
         topic: createForm.value.topic,
         violationType: createForm.value.violationType || undefined,
         initialNotes: createForm.value.initialNotes || undefined,
-      }
-      await createKonseling(payload)
+      })
       showToast('Jadwal konseling berhasil dibuat', 'success')
       closeCreateModal()
-      // Refresh list riwayat & wajib setelah data berhasil masuk
       await fetchWajibKonseling(selectedMonth.value)
       await fetchRiwayatKonseling(filterStudentId.value ?? undefined, filterStartDate.value, filterEndDate.value)
     } catch (error: any) {
@@ -249,6 +245,9 @@ export const useKonselingStore = defineStore('konseling', () => {
     editTarget.value = item
     editForm.value = {
       date: item.date,
+      waktuMulai: item.waktuMulai || '',
+      waktuSelesai: item.waktuSelesai || '',
+      tempat: item.tempat || '',
       topic: item.topic,
       violationType: item.jenisPelanggaran || '',
       initialNotes: item.catatanAwal || '',
@@ -260,7 +259,7 @@ export const useKonselingStore = defineStore('konseling', () => {
   const closeEditModal = () => {
     showEditModal.value = false
     editTarget.value = null
-    editForm.value = { date: '', topic: '', violationType: '', initialNotes: '' }
+    editForm.value = { date: '', waktuMulai: '', waktuSelesai: '', tempat: '', topic: '', violationType: '', initialNotes: '' }
     editError.value = ''
   }
 
@@ -274,6 +273,7 @@ export const useKonselingStore = defineStore('konseling', () => {
       const payload: UpdateKonselingPayload = {
         date: editForm.value.date,
         topic: editForm.value.topic,
+        tempat: editForm.value.tempat,
         violationType: editForm.value.violationType || undefined,
         initialNotes: editForm.value.initialNotes || undefined,
       }

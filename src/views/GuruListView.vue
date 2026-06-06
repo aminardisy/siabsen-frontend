@@ -2,7 +2,7 @@
   <div class="p-8 w-full min-h-screen bg-gray-50 font-inter text-left">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4 text-left">
       <div>
-        <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Guru & Staf</h1>
+        <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Data Guru & Staf</h1>
         <p class="text-gray-500 text-sm">Kelola data tenaga pengajar dan wali kelas sekolah</p>
       </div>
 
@@ -52,12 +52,26 @@
             <th class="px-6 py-4">NUPTK / NIP</th>
             <th class="px-6 py-4">Nama Lengkap</th>
             <th class="px-6 py-4">Tipe</th>
-            <th class="px-6 py-4">Mata Pelajaran</th>
+            <th class="px-6 py-4">Mata Pelajaran / Jabatan</th>
             <th class="px-6 py-4 text-center">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          <tr v-for="g in filteredGuru" :key="g.id" class="hover:bg-slate-50 transition-colors">
+
+          <tr v-if="isLoading" v-for="i in 5" :key="'skeleton-guru-' + i" class="animate-pulse bg-white">
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-28 font-mono"></div></td>
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-3/4"></div></td>
+            <td class="px-6 py-4"><div class="h-5 bg-slate-200 rounded-full w-14"></div></td>
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-32"></div></td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex justify-center gap-4">
+                <div class="h-8 bg-slate-200 rounded-lg w-8"></div>
+                <div class="h-8 bg-slate-200 rounded-lg w-8"></div>
+              </div>
+            </td>
+          </tr>
+
+          <tr v-else-if="filteredGuru.length > 0" v-for="g in filteredGuru" :key="g.id" class="hover:bg-slate-50 transition-colors">
             <td class="px-6 py-4 text-sm font-medium text-gray-500 font-mono">{{ g.nip }}</td>
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ g.nama }}</td>
             <td class="px-6 py-4">
@@ -84,6 +98,12 @@
               </div>
             </td>
           </tr>
+
+          <tr v-else>
+            <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-sm font-medium">
+              Tidak ada data guru atau staf yang cocok dengan kriteria pencarian.
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -91,7 +111,7 @@
     <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
-          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Guru Baru' : 'Edit Data Guru' }}</h3>
+          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Guru Baru' : 'Perbarui Data Guru' }}</h3>
           <button @click="isModalOpen = false" class="p-1 hover:bg-white/10 rounded-lg transition-colors group">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -197,7 +217,7 @@ import { guruService, importGuruExcel } from '@/services/guruService'
 import { toast } from 'vue-sonner'
 import type { GuruRequest, GuruResponse } from '@/models/guru'
 import BaseSearch from '@/components/layout/BaseSearch.vue'
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // FIX: Impor modal konfirmasi global
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 
 // 1. State Management
 const guruList = ref<GuruResponse[]>([])
@@ -205,7 +225,10 @@ const searchQuery = ref('')
 const isModalOpen = ref(false)
 const modalMode = ref<'add' | 'edit'>('add')
 
-// FIX: State Tambahan Pengendali Alur Modal Konfirmasi Hapus Guru
+// FIX 1: State baru pelacak putaran animasi loading skeleton
+const isLoading = ref(false)
+
+// State Tambahan Pengendali Alur Modal Konfirmasi Hapus Guru
 const isDeleteModalOpen = ref(false)
 const selectedGuruId = ref<number | null>(null)
 const selectedGuruName = ref('')
@@ -258,11 +281,16 @@ const filteredGuru = computed(() => {
 
 // 4. API Functions
 const fetchData = async () => {
+  // FIX 2: Aktifkan skeleton tepat sebelum memanggil API Spring Boot
+  isLoading.value = true
   try {
     const res = await guruService.getAll()
     guruList.value = res
   } catch (e) {
     toast.error('Gagal memuat data guru')
+  } finally {
+    // FIX 3: Matikan skeleton setelah data berhasil diterima
+    isLoading.value = false
   }
 }
 
@@ -271,14 +299,12 @@ const handleNuptkInput = (e: Event) => {
   formGuru.value.nuptk = target.value.replace(/\D/g, '').slice(0, 16)
 }
 
-// FIX: Fungsi baru untuk menyimpan state target sebelum memunculkan modal bahaya merah
 const triggerDeleteGuru = (id: number, nama: string) => {
   selectedGuruId.value = id
   selectedGuruName.value = nama
   isDeleteModalOpen.value = true
 }
 
-// FIX: Eksekusi final penghapusan data ke server Railway
 const submitDeleteGuru = async () => {
   if (!selectedGuruId.value) return
   try {

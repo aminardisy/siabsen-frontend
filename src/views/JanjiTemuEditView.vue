@@ -11,19 +11,61 @@
       </div>
 
       <form v-else @submit.prevent="handleSubmit" class="space-y-6">
+
+        <!-- Siswa: Searchable Combobox -->
         <div class="space-y-1">
           <label class="text-xs font-bold text-gray-400 uppercase ml-1">Siswa</label>
-          <select
-            v-model="formJanjiTemu.siswaId"
-            class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-sm font-semibold text-slate-700 cursor-pointer"
-            :disabled="isSubmitting"
-            required
-          >
-            <option :value="null" disabled>-- Pilih Siswa --</option>
-            <option v-for="siswa in siswaOptions" :key="siswa.id" :value="siswa.id">
-              {{ siswa.namaLengkap }} ({{ siswa.nisn }})
-            </option>
-          </select>
+          <div class="relative">
+            <div class="relative flex items-center">
+              <!-- Search icon -->
+              <svg class="absolute left-3 w-4 h-4 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              </svg>
+              <input
+                type="text"
+                v-model="siswaSearch"
+                @focus="onSiswaInputFocus"
+                @blur="onSiswaInputBlur"
+                :disabled="isSubmitting || isDeleting"
+                placeholder="Cari nama atau NISN siswa..."
+                class="w-full bg-gray-50 border border-gray-100 pl-9 pr-9 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-sm font-semibold text-slate-700 disabled:opacity-50"
+                :class="{ 'ring-2 ring-[#26A69A]': isSiswaDropdownOpen }"
+                autocomplete="off"
+              />
+              <!-- Clear button -->
+              <button
+                v-if="selectedSiswa"
+                type="button"
+                @click="clearSiswa"
+                class="absolute right-3 text-gray-400 hover:text-gray-600"
+              >
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Dropdown hasil pencarian -->
+            <div
+              v-if="isSiswaDropdownOpen"
+              class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto"
+            >
+              <div v-if="filteredSiswa.length === 0" class="px-4 py-3 text-sm text-gray-400">
+                Siswa tidak ditemukan.
+              </div>
+              <button
+                v-for="siswa in filteredSiswa"
+                :key="siswa.id"
+                type="button"
+                @mousedown.prevent="selectSiswa(siswa)"
+                class="w-full text-left px-4 py-3 text-sm hover:bg-[#E0F2F1] transition-colors"
+                :class="{ 'bg-[#E0F2F1] font-semibold': selectedSiswa?.id === siswa.id }"
+              >
+                <span class="font-medium text-gray-800">{{ siswa.namaLengkap }}</span>
+                <span class="ml-2 text-gray-400 text-xs">{{ siswa.nisn }}</span>
+              </button>
+            </div>
+          </div>
           <p v-if="errors.siswaId" class="text-xs text-red-500 font-bold ml-1 flex items-center gap-1 mt-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -32,12 +74,13 @@
           </p>
         </div>
 
+        <!-- Guru: tetap dropdown biasa -->
         <div class="space-y-1">
           <label class="text-xs font-bold text-gray-400 uppercase ml-1">Guru</label>
           <select
             v-model="formJanjiTemu.guruId"
             class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:ring-2 focus:ring-[#26A69A] text-sm font-semibold text-slate-700 cursor-pointer"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || isDeleting"
             required
           >
             <option :value="null" disabled>-- Pilih Guru --</option>
@@ -194,6 +237,53 @@ const isSubmitting = ref(false)
 const isDeleting = ref(false)
 const isDeleteModalOpen = ref(false)
 
+// --- Siswa search state ---
+const siswaSearch = ref('')
+const isSiswaDropdownOpen = ref(false)
+const selectedSiswa = ref<SiswaResponse | null>(null)
+
+const filteredSiswa = computed(() => {
+  const q = siswaSearch.value.toLowerCase()
+  if (!q) return siswaOptions.value
+  return siswaOptions.value.filter(
+    (s) =>
+      s.namaLengkap?.toLowerCase().includes(q) ||
+      s.nisn.toLowerCase().includes(q)
+  )
+})
+
+const selectSiswa = (siswa: SiswaResponse) => {
+  selectedSiswa.value = siswa
+  formJanjiTemu.value.siswaId = siswa.id
+  siswaSearch.value = siswa.namaLengkap ?? ''
+  isSiswaDropdownOpen.value = false
+  errors.value.siswaId = ''
+}
+
+const clearSiswa = () => {
+  selectedSiswa.value = null
+  formJanjiTemu.value.siswaId = null
+  siswaSearch.value = ''
+  isSiswaDropdownOpen.value = false
+}
+
+const onSiswaInputFocus = () => {
+  isSiswaDropdownOpen.value = true
+  if (selectedSiswa.value) siswaSearch.value = ''
+}
+
+const onSiswaInputBlur = () => {
+  setTimeout(() => {
+    isSiswaDropdownOpen.value = false
+    if (selectedSiswa.value) {
+      siswaSearch.value = selectedSiswa.value.namaLengkap ?? ''
+    } else {
+      siswaSearch.value = ''
+    }
+  }, 150)
+}
+// -------------------------
+
 const formJanjiTemu = ref<JanjiTemuUpdateRequest>({
   siswaId: null,
   guruId: null,
@@ -226,15 +316,25 @@ const fetchData = async () => {
     siswaOptions.value = siswaList
     guruOptions.value = guruList
 
-    // FIX: Ditambahkan substring(0, 5) untuk memotong rekor detik dari DB (e.g., 14:30:00 -> 14:30)
+    const siswaId = (detailJanjiTemu.siswa as any)?.id || (detailJanjiTemu as any).siswaId || null
+
     formJanjiTemu.value = {
-      siswaId: (detailJanjiTemu.siswa as any)?.id || (detailJanjiTemu as any).siswaId || null,
+      siswaId,
       guruId: (detailJanjiTemu.guru as any)?.id || (detailJanjiTemu as any).guruId || null,
       tanggal: detailJanjiTemu.tanggal || '',
       waktu: detailJanjiTemu.waktu ? detailJanjiTemu.waktu.substring(0, 5) : '',
       waktuSelesai: detailJanjiTemu.waktuSelesai ? detailJanjiTemu.waktuSelesai.substring(0, 5) : '',
       lokasi: detailJanjiTemu.lokasi || '',
       keperluan: detailJanjiTemu.keperluan || '',
+    }
+
+    // Populate siswa search bar dengan data yang sudah ada
+    if (siswaId) {
+      const matched = siswaList.find((s) => s.id === siswaId)
+      if (matched) {
+        selectedSiswa.value = matched
+        siswaSearch.value = matched.namaLengkap || ''
+      }
     }
 
   } catch {
@@ -332,7 +432,6 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    // FIX: Memastikan payload terpotong bersih hanya 5 karakter (HH:mm) saat dikirim ke BE
     await janjiTemuService.update(janjiTemuId, {
       siswaId: formJanjiTemu.value.siswaId,
       guruId: formJanjiTemu.value.guruId,

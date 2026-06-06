@@ -11,7 +11,7 @@
           @click="openModal('add')"
           class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 h-11 rounded-xl font-bold transition-all shadow-md shadow-teal-100/50 whitespace-nowrap text-sm"
         >
-          + Tambah Kelas
+          + Kelas
         </button>
       </div>
     </div>
@@ -29,7 +29,22 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          <tr v-for="k in filteredKelas" :key="k.id" class="hover:bg-slate-50 transition-colors group">
+
+          <tr v-if="isLoading" v-for="i in 5" :key="'skeleton-kelas-' + i" class="animate-pulse bg-white">
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-24"></div></td>
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-20"></div></td>
+            <td class="px-6 py-4 text-center"><div class="h-5 bg-slate-200 rounded-md w-12 mx-auto"></div></td>
+            <td class="px-6 py-4"><div class="h-4 bg-slate-200 rounded-md w-40"></div></td>
+            <td class="px-6 py-4 text-center"><div class="h-4 bg-slate-200 rounded-md w-8 mx-auto"></div></td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex justify-center gap-3">
+                <div class="h-8 bg-slate-200 rounded-lg w-8"></div>
+                <div class="h-8 bg-slate-200 rounded-lg w-8"></div>
+              </div>
+            </td>
+          </tr>
+
+          <tr v-else-if="filteredKelas.length > 0" v-for="k in filteredKelas" :key="k.id" class="hover:bg-slate-50 transition-colors group">
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ k.namaKelas }}</td>
             <td class="px-6 py-4 text-sm text-gray-500">{{ k.tahunAjaran || '2025/2026' }}</td>
             <td class="px-6 py-4 text-center">
@@ -52,6 +67,12 @@
               </div>
             </td>
           </tr>
+
+          <tr v-else>
+            <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm font-medium">
+              Tidak ada data ruang kelas yang sesuai dengan kriteria pencarian.
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -59,7 +80,7 @@
     <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-left animate-in fade-in zoom-in-95 duration-200">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
-          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Kelas' : 'Edit Kelas' }}</h3>
+          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Tambah Kelas' : 'Perbarui Kelas' }}</h3>
           <button @click="isModalOpen = false" class="p-1 hover:bg-white/10 rounded-lg transition-colors group">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -146,7 +167,7 @@ import { kelasService } from '@/services/kelasService'
 import { guruService } from '@/services/guruService'
 import { toast } from 'vue-sonner'
 import BaseSearch from '@/components/layout/BaseSearch.vue'
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // FIX: Impor komponen modal konfirmasi global
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 
 // 1. State Management
 const kelasList = ref<any[]>([])
@@ -155,7 +176,10 @@ const searchQuery = ref('')
 const isModalOpen = ref(false)
 const modalMode = ref<'add' | 'edit'>('add')
 
-// FIX: State Tambahan Pengendali Alur Modal Konfirmasi Hapus Ruang Kelas
+// FIX 1: State reaktif pelacak sirkulasi loading skeleton halaman kelas
+const isLoading = ref(false)
+
+// State Pengendali Alur Modal Konfirmasi Hapus Ruang Kelas
 const isDeleteModalOpen = ref(false)
 const selectedKelasId = ref<number | null>(null)
 const selectedKelasName = ref('')
@@ -213,6 +237,8 @@ const availableWaliKelas = computed(() => {
 
 // 5. API Functions
 const fetchData = async () => {
+  // FIX 2: Nyalakan baris tiruan berdenyut sebelum fetch data
+  isLoading.value = true
   try {
     const [resK, resG] = await Promise.all([
       kelasService.getAll(),
@@ -222,6 +248,8 @@ const fetchData = async () => {
     daftarGuru.value = resG
   } catch (e) {
     toast.error('Gagal mengambil data dari server')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -264,7 +292,7 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
       jurusan: data.jurusan || parts[1],
       nomorKelas: parts[2] || '',
       guruId: guruAsli ? guruAsli.id : null,
-      tahunAjaran: data.tahunAjaran || '2025/2026'
+      tahunAjaran: data.tahunAjaran
     }
   } else {
     formKelas.value = { id: undefined, tingkat: '', jurusan: '', nomorKelas: '', guruId: null, tahunAjaran: '2025/2026' }
@@ -272,14 +300,12 @@ const openModal = (mode: 'add' | 'edit', data: any = null) => {
   isModalOpen.value = true
 }
 
-// FIX: Fungsi baru menyimpan state target sebelum memunculkan modal peringatan merah
 const triggerDeleteKelas = (id: number, nama: string) => {
   selectedKelasId.value = id
   selectedKelasName.value = nama
   isDeleteModalOpen.value = true
 }
 
-// FIX: Eksekusi final penghapusan data kelas ke server backend Railway
 const submitDeleteKelas = async () => {
   if (!selectedKelasId.value) return
   try {

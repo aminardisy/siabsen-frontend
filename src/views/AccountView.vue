@@ -1,5 +1,6 @@
 <template>
   <div class="p-8 w-full min-h-screen bg-gray-50 font-inter text-left">
+
     <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4 text-left">
       <div>
         <h1 class="text-3xl font-bold text-[#1A2342] mb-1">Manajemen Akun Pengguna</h1>
@@ -7,10 +8,26 @@
       </div>
       <button
         @click="openModal('add')"
-        class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 h-11 rounded-xl font-bold shadow-md shadow-teal-100/50 flex items-center gap-2 transition-all text-sm w-full sm:w-auto justify-center"
+        class="bg-[#26A69A] hover:bg-[#1f8a7f] text-white px-6 h-11 rounded-xl font-bold shadow-md shadow-teal-100/50 flex items-center gap-2 transition-all text-sm w-full sm:w-auto justify-center active:scale-95"
       >
-        <span>+</span> Tambah Akun
+        <span>+</span> Akun
       </button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6">
+      <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Cari Data Akun</label>
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Ketik nama, email, atau hak akses role..."
+          class="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#26A69A] transition font-semibold text-slate-700 placeholder:font-normal"
+        />
+        <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -25,7 +42,12 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          <tr v-for="acc in accounts" :key="acc.id" class="hover:bg-slate-50 transition-colors">
+          <tr v-if="filteredAccounts.length === 0">
+            <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-sm font-medium">
+              Tidak ada data akun pengguna yang cocok dengan kriteria pencarian.
+            </td>
+          </tr>
+          <tr v-for="acc in filteredAccounts" :key="acc.id" class="hover:bg-slate-50 transition-colors">
             <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ acc.nama }}</td>
             <td class="px-6 py-4 text-sm text-gray-500">{{ acc.email }}</td>
             <td class="px-6 py-4">
@@ -60,7 +82,7 @@
     <div v-if="isModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A2342]/40 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all text-left animate-in fade-in zoom-in-95 duration-200">
         <div class="bg-[#26A69A] p-6 text-white flex justify-between items-center">
-          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Buat Akun Baru' : 'Edit Akun' }}</h3>
+          <h3 class="text-xl font-bold">{{ modalMode === 'add' ? 'Buat Akun Baru' : 'Perbarui Akun' }}</h3>
           <button @click="isModalOpen = false" class="p-1 hover:bg-white/10 rounded-lg transition-colors group">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -156,8 +178,7 @@ import { accountService } from '@/services/accountService'
 import { guruService } from '@/services/guruService'
 import { siswaService } from '@/services/siswaService'
 import type { AccountResponseDTO } from '@/models/account'
-import BaseSearch from '@/components/layout/BaseSearch.vue'
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // FIX: Impor modal konfirmasi global
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 
 // 1. State Management
 const accounts = ref<AccountResponseDTO[]>([])
@@ -166,7 +187,10 @@ const daftarSiswa = ref<any[]>([])
 const isModalOpen = ref(false)
 const modalMode = ref<'add' | 'edit'>('add')
 
-// FIX: State Tambahan Pengendali Alur Modal Konfirmasi Hapus/Deaktivasi Akun
+// FITUR BARU: Penampung teks query pencarian akun
+const searchQuery = ref('')
+
+// State Pengendali Alur Modal Konfirmasi Deaktivasi Akun
 const isDeleteModalOpen = ref(false)
 const selectedAccountId = ref('')
 const selectedAccountName = ref('')
@@ -190,7 +214,19 @@ const formAccount = ref({
   status: 'Aktif',
 })
 
-// 2. Logic: Validasi Form
+// 2. Logic: Fitur Baru Filter Live-Search Akun Pengguna
+const filteredAccounts = computed(() => {
+  if (!searchQuery.value.trim()) return accounts.value
+  const q = searchQuery.value.toLowerCase().trim()
+
+  return accounts.value.filter(acc =>
+    (acc.nama?.toLowerCase().includes(q)) ||
+    (acc.email?.toLowerCase().includes(q)) ||
+    (acc.role?.toLowerCase().includes(q))
+  )
+})
+
+// Logic: Validasi Form
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const isEmailInvalid = computed(() => formAccount.value.email.length > 0 && !emailRegex.test(formAccount.value.email))
 const isPasswordShort = computed(() => modalMode.value === 'add' && formAccount.value.password.length > 0 && formAccount.value.password.length < 6)
@@ -254,14 +290,12 @@ const handleSubmit = async () => {
   }
 }
 
-// FIX: Fungsi baru menyimpan state target sebelum memunculkan modal bahaya merah
 const triggerDeleteAccount = (id: string, nama: string) => {
   selectedAccountId.value = id
   selectedAccountName.value = nama
   isDeleteModalOpen.value = true
 }
 
-// FIX: Eksekusi final penonaktifan akun pengguna ke server backend Railway
 const submitDeleteAccount = async () => {
   if (!selectedAccountId.value) return
   try {
